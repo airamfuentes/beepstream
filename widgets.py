@@ -13,13 +13,12 @@ del programa escribe un "#101013" a mano.
 
 from __future__ import annotations
 
-import ctypes
 import math
-import sys
 import tkinter as tk
 from tkinter import ttk
 
 import marca
+import sistema
 import tema as tm
 
 
@@ -41,31 +40,6 @@ def pill(lienzo: tk.Canvas, x0, y0, x1, y1, color, **kw) -> int:
     medio = grosor / 2.0
     return lienzo.create_line(x0 + medio, y0 + medio, x1 - medio, y0 + medio,
                               width=grosor, fill=color, capstyle="round", **kw)
-
-
-def barra_de_titulo(ventana: tk.Misc, oscura: bool) -> None:
-    """Pone la barra de titulo de Windows a juego con el tema.
-
-    Tk no la dibuja: la dibuja Windows, y por defecto siempre en claro.
-    Queda una franja blanca encima de una ventana negra. DWM tiene un
-    atributo para cambiarla, y desde Windows 10 20H1 es el 20 (antes era
-    el 19, y en versiones anteriores no existe).
-
-    Hay que llamarlo con la ventana ya dibujada o Windows lo ignora.
-    """
-    if sys.platform != "win32":
-        return
-    try:
-        ventana.update_idletasks()
-        hwnd = ctypes.windll.user32.GetParent(ventana.winfo_id())
-        valor = ctypes.c_int(1 if oscura else 0)
-        for atributo in (20, 19):
-            if ctypes.windll.dwmapi.DwmSetWindowAttribute(
-                    hwnd, atributo, ctypes.byref(valor),
-                    ctypes.sizeof(valor)) == 0:
-                return
-    except Exception:  # noqa: BLE001
-        pass  # Windows antiguo: se queda con la barra clara
 
 
 def redondeado(lienzo: tk.Canvas, x0, y0, x1, y1, radio, **kw) -> int:
@@ -119,38 +93,55 @@ class Kit:
         """Pone la barra de titulo de esa ventana a juego, ahora y al
         cambiar de tema."""
         self._ventanas.append(ventana)
-        barra_de_titulo(ventana, self.tema == "oscuro")
+        sistema.barra_de_titulo(ventana, self.tema == "oscuro")
 
     def al_cambiar_tema(self, funcion) -> None:
         """Registra algo que hay que repintar a mano (lienzos, sobre todo)."""
         self._al_cambiar.append(funcion)
 
+    @staticmethod
+    def _vive(widget) -> bool:
+        """Si un widget de Tk sigue existiendo.
+
+        Un widget destruido puede contestar con un cero o directamente
+        reventar, segun por donde se le pregunte: hay que cubrir las dos.
+        """
+        try:
+            return bool(widget.winfo_exists())
+        except Exception:  # noqa: BLE001
+            return False
+
     def cambiar_tema(self, nombre: str) -> None:
         self.tema = nombre
         self.color = tm.paleta(nombre)
         self.estilos_ttk()
+        # Las tres listas se limpian al vuelo de lo que ya no existe.
+        # Sin esto, cerrar la guia y cambiar de tema revienta al intentar
+        # repintar sus lienzos, y ademas las listas crecerian sin fin
+        # abriendo y cerrando ventanas.
         vivos = []
         for widget, papeles in self._pintados:
-            try:
-                widget.winfo_exists()
-            except tk.TclError:
+            if not self._vive(widget):
                 continue
             self._aplicar(widget, papeles)
             vivos.append((widget, papeles))
         self._pintados = vivos
 
-        vivas = []
+        self._ventanas = [v for v in self._ventanas if self._vive(v)]
         for ventana in self._ventanas:
-            try:
-                ventana.winfo_exists()
-            except tk.TclError:
-                continue
-            barra_de_titulo(ventana, nombre == "oscuro")
-            vivas.append(ventana)
-        self._ventanas = vivas
+            sistema.barra_de_titulo(ventana, nombre == "oscuro")
 
+        vivas = []
         for funcion in self._al_cambiar:
-            funcion()
+            dueno = getattr(funcion, "__self__", None)
+            if dueno is not None and not self._vive(dueno):
+                continue
+            try:
+                funcion()
+            except tk.TclError:
+                continue  # se destruyo entre medias
+            vivas.append(funcion)
+        self._al_cambiar = vivas
 
     # --- ttk --------------------------------------------------------
 
@@ -248,6 +239,45 @@ class Kit:
         return combo
 
 
+class BarraAuto(ttk.Scrollbar):
+    """Barra de desplazamiento que desaparece cuando no hace falta.
+
+    Una barra con el pulgar ocupando el carril entero no informa de
+    nada y solo mete ruido. Se esconde cuando todo el contenido cabe a
+    la vista y vuelve en cuanto sobra.
+    """
+
+    def __init__(self, padre, lado: str = "right", **kw) -> None:
+        super().__init__(padre, orient="vertical",
+                         style="BS.Vertical.TScrollbar", **kw)
+        self._lado = lado
+        self._contenido = None
+
+    def acompanar(self, widget) -> None:
+        """Ata la barra a lo que desplaza.
+
+        Ademas guarda ese widget para colocarse SIEMPRE antes que el.
+        Apareciendo despues, el contenido ya se habria quedado con todo
+        el ancho y la barra saldria de cero pixeles.
+        """
+        self._contenido = widget
+        self.configure(command=widget.yview)
+
+    def set(self, primero, ultimo) -> None:  # noqa: A003
+        try:
+            cabe = float(primero) <= 0.0 and float(ultimo) >= 1.0
+        except (TypeError, ValueError):
+            cabe = False
+        if cabe:
+            self.pack_forget()
+        elif not self.winfo_ismapped():
+            opciones = {"side": self._lado, "fill": "y"}
+            if self._contenido is not None:
+                opciones["before"] = self._contenido
+            self.pack(**opciones)
+        super().set(primero, ultimo)
+
+
 class Desplazable(tk.Frame):
     """Zona con barra de desplazamiento vertical.
 
@@ -266,13 +296,12 @@ class Desplazable(tk.Frame):
         kit.registrar(self, bg=papel)
         self.kit = kit
 
-        self.barra = ttk.Scrollbar(self, orient="vertical",
-                                   style="BS.Vertical.TScrollbar")
+        self.barra = BarraAuto(self)
         self.lienzo = tk.Canvas(self, highlightthickness=0, bd=0,
-                                yscrollcommand=self._mover_barra)
+                                yscrollcommand=self.barra.set)
         kit.registrar(self.lienzo, bg=papel)
         self.lienzo.pack(side="left", fill="both", expand=True)
-        self.barra.configure(command=self.lienzo.yview)
+        self.barra.acompanar(self.lienzo)
 
         self.interior = kit.marco(self.lienzo, papel)
         self._ventana = self.lienzo.create_window(
@@ -283,13 +312,6 @@ class Desplazable(tk.Frame):
         # El evento de la rueda va a la ventana entera y no al widget
         # bajo el raton, asi que se escucha arriba del todo.
         self.winfo_toplevel().bind_all("<MouseWheel>", self._rueda, add="+")
-
-    def _mover_barra(self, primero: str, ultimo: str) -> None:
-        if float(primero) <= 0.0 and float(ultimo) >= 1.0:
-            self.barra.pack_forget()
-        elif not self.barra.winfo_ismapped():
-            self.barra.pack(side="right", fill="y")
-        self.barra.set(primero, ultimo)
 
     def _cambio_interior(self, _evento=None) -> None:
         self.lienzo.configure(scrollregion=self.lienzo.bbox("all"))

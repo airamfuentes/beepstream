@@ -54,7 +54,7 @@ def describir(indice) -> str:
     try:
         d = sd.query_devices(indice)
     except Exception:  # noqa: BLE001
-        return f"indice {indice}"
+        return f"índice {indice}"
     return f"{d['name']}  [{_nombre_api(d['hostapi'])}]"
 
 
@@ -96,7 +96,7 @@ def resolver(dispositivo, entrada: bool):
     if not encontrados:
         tipo = "entrada" if entrada else "salida"
         raise ValueError(
-            f"No hay ningun dispositivo de {tipo} que se llame '{texto}'.\n"
+            f"No hay ningún dispositivo de {tipo} que se llame '{texto}'.\n"
             f"Ejecuta  py -3.11 main.py --listar  para ver los disponibles."
         )
 
@@ -194,14 +194,14 @@ def abrir(constructor, indice, entrada: bool, que_es: str):
     raise RuntimeError(
         f"No se puede abrir {que_es}:\n\n    {aparato}\n\n"
         f"Se ha intentado por todas las APIs de Windows:\n{detalle}\n\n"
-        "Causas mas frecuentes, por orden:\n"
+        "Causas más frecuentes, por orden:\n"
         "  1. Si es un casco inalambrico, esta apagado o dormido.\n"
         "     Enciendelo y espera a que Windows lo reconozca.\n"
         "  2. Otro programa lo tiene cogido en exclusiva.\n"
         "     Cierra OBS o Discord y vuelve a intentarlo.\n"
-        "  3. Windows no da permiso: Configuracion > Privacidad y\n"
-        "     seguridad > Microfono > permitir a las aplicaciones de\n"
-        "     escritorio acceder al microfono.\n"
+        "  3. Windows no da permiso: Configuración > Privacidad y\n"
+        "     seguridad > Micrófono > permitir a las aplicaciones de\n"
+        "     escritorio acceder al micrófono.\n"
         "  4. El dispositivo esta desactivado en el Panel de control\n"
         "     de Sonido."
     )

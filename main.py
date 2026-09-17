@@ -26,7 +26,7 @@ def listar_dispositivos() -> None:
     import sounddevice as sd
 
     dispositivos = sd.query_devices()
-    print("\nENTRADAS (microfonos)")
+    print("\nENTRADAS (micrófonos)")
     print("-" * 60)
     for i, d in enumerate(dispositivos):
         if d["max_input_channels"] > 0:
@@ -79,7 +79,7 @@ def modo_consola(argumentos) -> int:
     print("=" * 60)
     print(f"  Retardo   {ajustes.retardo_ms} ms")
     print(f"  Beep      {ajustes.beep_ms} ms")
-    print(f"  Terminos  {len(terminos)}")
+    print(f"  Términos  {len(terminos)}")
     print("=" * 60)
     print("  Ctrl+C para parar\n")
 
@@ -121,11 +121,11 @@ def main() -> int:
     analizador = argparse.ArgumentParser(
         prog="BeepStream", description="Censor de audio en tiempo real para directos.")
     analizador.add_argument("--consola", action="store_true",
-                            help="ejecuta sin interfaz grafica")
+                            help="ejecuta sin interfaz gráfica")
     analizador.add_argument("--listar", action="store_true",
                             help="lista los dispositivos de audio y sale")
-    analizador.add_argument("--entrada", type=int, help="indice del microfono")
-    analizador.add_argument("--salida", type=int, help="indice de la salida")
+    analizador.add_argument("--entrada", type=int, help="índice del micrófono")
+    analizador.add_argument("--salida", type=int, help="índice de la salida")
     analizador.add_argument("--retardo", type=int, help="retardo en milisegundos")
     argumentos = analizador.parse_args()
 

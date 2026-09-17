@@ -80,22 +80,33 @@ step opens the microphone live so the level meter moves while you talk.
 
 ## The engineering problem
 
-### Why the delay is 1250 ms and not 630 ms
+### Why the delay is 1500 ms and not 830 ms
 
 The obvious calculation says the delay only needs to cover recognition latency.
 Measured on this model, the worst case from *end of spoken word* to *Vosk emits
 the result* is **830 ms**. So 900 ms should be plenty.
 
-It is not, and the reason is where the timestamps come from. Vosk reports word
-boundaries relative to the **start of the utterance**, and it only finalises a
-result when it detects a pause. A word spoken at the beginning of a long
-sentence is not reported until the sentence ends. The delay has to cover
-recognition latency *plus* the gap between the word and the pause that flushes
-it.
+It is not, for two compounding reasons.
 
-`herramientas/medir_latencia.py` measures this on a real recording and prints
-the distribution, so the number is calibrated rather than guessed. The window
-warns when the configured delay drops below the measured safe threshold.
+The first is where the timestamps come from. Vosk reports word boundaries
+relative to the **start of the utterance**, and only finalises a result when it
+detects a pause. A word spoken at the beginning of a long sentence is not
+reported until that sentence ends.
+
+The second is the recognizer's own windowing. `recognizer.py` runs three
+staggered 800 ms windows rather than four 600 ms ones: with `N` channels and
+window `W`, a word lands whole inside some channel as long as it is shorter than
+`W × (1 − 1/N)`, and every forced flush costs ~26 ms of CPU. Measured over 120
+phrases degraded the way voice chat degrades them, 3 × 800 detects more than
+4 × 600 while using 26% less CPU. The price is 200 ms more detection latency.
+
+830 ms of recognition plus an 800 ms window is what sets the floor. At 1500 ms
+there is roughly 670 ms of headroom; below that the windows would have to shrink
+back to 600 ms and accuracy drops. The window warns before starting if the
+configured delay is under the recommended value.
+
+`herramientas/medir_latencia.py` measures the distribution on a real recording,
+so the number is calibrated rather than guessed.
 
 ### Fuzzy matching without false positives
 
@@ -121,6 +132,19 @@ It runs as a **separate engine with its own recognizer and its own thread**. If
 loopback capture dies mid-stream, the microphone censor keeps running: the
 channel-ending risk is on the microphone, and one channel must not take the
 other down with it.
+
+### Editing the lists without destroying them
+
+`palabras.txt` is not just a list: it carries a header explaining the format
+and is split into commented categories. Rewriting the file from an in-memory
+list of terms would erase all of that, so the in-app editor never does.
+
+`listas.py` keeps the file as lines, tagging which ones are terms. Editing
+replaces a line in place, deleting removes that line, and adding appends under
+a section of its own. Comments, categories and ordering survive, so hand-editing
+the file in a text editor and editing it in the app remain interchangeable.
+Saving writes to a temporary file and renames it, after leaving a `.bak` — the
+one expensive mistake here is emptying the list right before going live.
 
 ### Failure has to be loud
 
@@ -181,7 +205,10 @@ main.py            entry point, CLI flags, console mode
 │   ├── tema.py    design tokens: monochrome palette, type scale, spacing
 │   ├── marca.py   logo geometry, shared by the UI and the icon generator
 │   ├── fuentes.py loads the bundled Inter privately, no system install
-│   └── asistente.py   first-run guided setup, canvas diagrams
+│   ├── sistema.py Win32 glue: app identity, icons, DPI, dark title bar
+│   ├── asistente.py   first-run guided setup, canvas diagrams
+│   ├── palabras.py    word-list editor
+│   └── listas.py      comment-preserving read/write of the list files
 ├── engine.py      ring buffer, censor core, microphone engine
 ├── escritorio.py  second engine: desktop audio via WASAPI loopback
 ├── recognizer.py  Vosk wrapper, decimation, gain staging
@@ -227,12 +254,21 @@ genuinely matters, decorative colour elsewhere is what buries it.
 py -3.11 tests/test_matcher.py            # phonetic matching, no hardware
 py -3.11 tests/test_engine.py             # ring buffer, DSP, interval logic
 py -3.11 tests/test_falsos_positivos.py   # audits the real word list
+py -3.11 tests/test_interfaz.py           # palette, type scale, list editing, windows
 py -3.11 tests/test_integracion.py        # audio → Vosk → detection → tone
 py -3.11 tests/test_audio.py              # opens real devices
 py -3.11 tests/test_cable.py              # end-to-end through VB-CABLE
 ```
 
 The first three need no microphone and no model.
+
+`test_interfaz.py` is worth a note. Colours and font sizes are requested by
+name (`"panel_alto"`, `"seccion"`), which Python cannot check: a typo is not a
+syntax error, it is a `KeyError` raised only when that particular widget is
+painted, on that particular screen. The test walks the UI modules with `ast`,
+collects every role literal and checks it against the palette and the type
+scale — then builds the main window, all seven guide steps and the list editor
+in both themes, which is the only thing that really proves the window opens.
 
 ---
 

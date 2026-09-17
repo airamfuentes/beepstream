@@ -72,7 +72,7 @@ def version_para(ancho: float) -> str:
         return "completo"
     if ancho >= 24:
         return "medio"
-    if ancho >= 14:
+    if ancho >= 11:
         return "minimo"
     return "sello"
 

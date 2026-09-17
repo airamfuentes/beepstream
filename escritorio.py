@@ -266,8 +266,8 @@ class MotorEscritorio(NucleoCensor):
             if dispositivos.mismo_aparato(self.dispositivo_usado, nombre_destino):
                 raise RuntimeError(
                     f"No se puede escuchar '{self.dispositivo_usado}' y sacar "
-                    "el audio por ese mismo cable:\nlo censurado volveria a "
-                    "entrar y se realimentaria.\n\n"
+                    "el audio por ese mismo cable:\nlo censurado volvería a "
+                    "entrar y se realimentaría.\n\n"
                     "En 'Escuchar' elige los auriculares, no un cable."
                 )
 
@@ -304,7 +304,7 @@ class MotorEscritorio(NucleoCensor):
 
         if usada != destino:
             self._al_registrar(
-                f"El cable elegido para el audio del PC no abria; se usa "
+                f"El cable elegido para el audio del PC no abría; se usa "
                 f"{dispositivos.describir(usada)}.", "error")
 
         self._al_registrar(

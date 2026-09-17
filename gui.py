@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import collections
 import gc
-import os
 import queue
 import threading
 import time
@@ -29,7 +28,7 @@ import config as cfg
 import dispositivos as disp
 import escritorio
 import fuentes
-import rutas
+import sistema
 import tema as tm
 import widgets as w
 from beeper import guardar_wav
@@ -132,6 +131,9 @@ class Aplicacion(tk.Tk):
         self._ultimo_flujo: dict = {}
         self._bandeja: bandeja.Bandeja | None = None
         self._en_bandeja = False
+        # El editor de listas: se guarda para no abrir dos a la vez, que
+        # acabarian pisandose los cambios al guardar.
+        self._ventana_palabras = None
         # Las etiquetas del repaso periodico se reescribian doce veces
         # por segundo aunque fueran a decir lo mismo. Aqui se guarda lo
         # ultimo que se escribio en cada una para poder saltarse el
@@ -147,7 +149,7 @@ class Aplicacion(tk.Tk):
         self.kit.registrar(self, bg="fondo")
         self.geometry(f"{self.ANCHO}x{self.ALTO}")
         self.minsize(620, 760)
-        self._poner_icono()
+        sistema.poner_icono(self)
         self.protocol("WM_DELETE_WINDOW", self._cerrar)
 
         self._construir()
@@ -156,14 +158,6 @@ class Aplicacion(tk.Tk):
         self._tick()
 
         self.after(300, self._quizas_asistente)
-
-    def _poner_icono(self) -> None:
-        ruta = rutas.resolver(os.path.join("recursos", "icono.ico"))
-        if os.path.exists(ruta):
-            try:
-                self.iconbitmap(default=ruta)
-            except tk.TclError:
-                pass
 
     # ---------------------------------------------------------------
     #  Montaje de la ventana
@@ -179,7 +173,7 @@ class Aplicacion(tk.Tk):
         self.zona.pack(fill="both", expand=True)
         self.hoja = self.zona.interior
 
-        audio = w.Tarjeta(self.hoja, self.kit, "Microfono")
+        audio = w.Tarjeta(self.hoja, self.kit, "Micrófono")
         audio.pack(fill="x", padx=tm.ESPACIO["l"], pady=(0, tm.ESPACIO["s"]))
         self.combo_entrada = self.kit.combo(audio.fila("Entrada", 0, arriba=0))
         self.combo_entrada.pack(fill="x")
@@ -245,7 +239,7 @@ class Aplicacion(tk.Tk):
         for texto, accion, relleno in (
                 ("Modo prueba", self._abrir_prueba, (0, tm.ESPACIO["s"])),
                 ("Segundo plano", self._activar_rendimiento, (0, tm.ESPACIO["s"])),
-                ("Guia de instalacion", self._abrir_asistente, (0, 0))):
+                ("Guía de instalación", self._abrir_asistente, (0, 0))):
             boton = w.Boton(extras, self.kit, texto, accion, "normal", alto=8)
             boton.pack(side="left", fill="x", expand=True, padx=relleno)
 
@@ -293,8 +287,10 @@ class Aplicacion(tk.Tk):
             celda, textvariable=self.var_retardo, width=8,
             values=[str(v) for v in cfg.RETARDOS])
         self.combo_retardo.pack(side="left")
-        self.kit.etiqueta(celda, "ms  ·  mas alto = mas seguro", "micro",
-                          "tenue", "panel").pack(side="left", padx=tm.ESPACIO["m"])
+        self.kit.etiqueta(celda,
+                          f"ms  ·  recomendado {cfg.RETARDO_RECOMENDADO}",
+                          "micro", "tenue", "panel").pack(
+            side="left", padx=tm.ESPACIO["m"])
 
         celda = tarjeta.fila("Sonido", 1)
         self.var_estilo = tk.StringVar(
@@ -328,8 +324,12 @@ class Aplicacion(tk.Tk):
         celda = tarjeta.fila("Palabras", 3)
         self.eti_palabras = self.kit.etiqueta(celda, "", "cuerpo", "texto", "panel")
         self.eti_palabras.pack(side="left")
+        w.Boton(celda, self.kit, "Editar lista", self._abrir_palabras, "normal",
+                rol="micro", alto=5).pack(side="left", padx=tm.ESPACIO["m"])
+        # Recargar sigue estando para quien prefiera editar palabras.txt
+        # con el bloc de notas: aplica los cambios sin reiniciar.
         w.Boton(celda, self.kit, "Recargar", self._recargar_palabras, "sutil",
-                rol="micro", alto=5).pack(side="left", padx=tm.ESPACIO["s"])
+                rol="micro", alto=5).pack(side="left")
 
     def _construir_actividad(self) -> None:
         """Ultima deteccion y registro comparten tarjeta: las dos cuentan
@@ -351,8 +351,7 @@ class Aplicacion(tk.Tk):
         self.kit.registrar(caja, highlightbackground="borde", highlightcolor="borde")
         caja.grid(row=2, column=0, columnspan=2, sticky="nsew")
 
-        barra = ttk.Scrollbar(caja, style="BS.Vertical.TScrollbar")
-        barra.pack(side="right", fill="y")
+        barra = w.BarraAuto(caja)
         self.log = self.kit.registrar(
             tk.Text(caja, font=tm.fuente("mono"), relief="flat", height=9,
                     wrap="word", bd=0, padx=tm.ESPACIO["m"], pady=tm.ESPACIO["s"],
@@ -361,7 +360,7 @@ class Aplicacion(tk.Tk):
             bg="hundido", fg="suave", insertbackground="texto",
             selectbackground="panel_alto", selectforeground="texto")
         self.log.pack(fill="both", expand=True)
-        barra.configure(command=self.log.yview)
+        barra.acompanar(self.log)
         self._marcas_log()
         self.log.configure(state="disabled")
         self.kit.al_cambiar_tema(self._marcas_log)
@@ -425,8 +424,8 @@ class Aplicacion(tk.Tk):
 
         if not self.hay_cable():
             self._registrar(
-                "VB-CABLE no detectado. Sin el, el audio censurado no llega a "
-                "OBS. Abre la guia de instalacion para ponerlo.", "error")
+                "VB-CABLE no detectado. Sin él, el audio censurado no llega a "
+                "OBS. Abre la guía de instalación para ponerlo.", "error")
 
         self._cargar_dispositivos_pc()
 
@@ -506,7 +505,7 @@ class Aplicacion(tk.Tk):
         salida_micro = self._indice(self.combo_salida, self.salidas)
 
         if not self.var_pc.get():
-            texto = "Apagado: por el cable solo va tu microfono censurado."
+            texto = "Apagado: por el cable solo va tu micrófono censurado."
         elif salida_pc == salida_micro:
             texto = "Micro y PC censurados salen juntos por el mismo cable."
         else:
@@ -651,7 +650,7 @@ class Aplicacion(tk.Tk):
         if self.motor_pc is not None:
             self.motor_pc.detector = self.detector_pc
         self._refrescar_palabras()
-        self._registrar(f"Lista recargada: {len(self.terminos)} terminos.", "ok")
+        self._registrar(f"Lista recargada: {len(self.terminos)} términos.", "ok")
 
     # ---------------------------------------------------------------
     #  Marcha y parada
@@ -689,13 +688,13 @@ class Aplicacion(tk.Tk):
     def _iniciar(self) -> None:
         self._guardar_ajustes()
 
-        if int(self.var_retardo.get()) < cfg.RETARDO_MINIMO_SEGURO:
+        if int(self.var_retardo.get()) < cfg.RETARDO_RECOMENDADO:
             seguir = messagebox.askyesno(
                 "Retardo corto",
                 f"Has elegido {self.var_retardo.get()} ms.\n\n"
                 f"Medido con este modelo, el reconocimiento tarda hasta "
                 f"830 ms en confirmar una palabra. Por debajo de "
-                f"{cfg.RETARDO_MINIMO_SEGURO} ms se pueden escapar "
+                f"{cfg.RETARDO_RECOMENDADO} ms se pueden escapar "
                 f"palabras al directo.\n\n¿Continuar de todas formas?")
             if not seguir:
                 return
@@ -707,7 +706,7 @@ class Aplicacion(tk.Tk):
                 "La salida no es VB-CABLE",
                 f"Has elegido:\n\n{nombre_salida}\n\n"
                 "Para que OBS reciba el audio censurado la salida "
-                "deberia ser 'CABLE Input'.\n\n¿Continuar de todas formas?")
+                "debería ser 'CABLE Input'.\n\n¿Continuar de todas formas?")
             if not seguir:
                 return
 
@@ -749,7 +748,7 @@ class Aplicacion(tk.Tk):
             self._registrar(f"Audio del PC: {error}", "error")
             messagebox.showerror(
                 "No se puede censurar el audio del PC",
-                f"{error}\n\nEl microfono sigue censurandose con normalidad.")
+                f"{error}\n\nEl micrófono sigue censurandose con normalidad.")
 
     def _parar_pc(self) -> None:
         if self.motor_pc is not None:
@@ -809,7 +808,7 @@ class Aplicacion(tk.Tk):
         self.motor.silenciado = not self.motor.silenciado
         activo = self.motor.silenciado
         self._pintar_mute()
-        self._registrar("Microfono silenciado." if activo else "Microfono abierto.",
+        self._registrar("Micrófono silenciado." if activo else "Micrófono abierto.",
                         "error" if activo else "ok")
 
     def _pintar_marcha(self) -> None:
@@ -895,7 +894,7 @@ class Aplicacion(tk.Tk):
             partes = [f"{stats.censuras} censuras",
                       f"retardo real {self.motor.retardo_real_ms:.0f} ms"]
             if stats.margen_minimo_ms != float("inf"):
-                partes.append(f"margen minimo {stats.margen_minimo_ms:.0f} ms")
+                partes.append(f"margen mínimo {stats.margen_minimo_ms:.0f} ms")
             if stats.tardias:
                 partes.append(f"{stats.tardias} TARDIAS")
             if stats.cortes_entrada or stats.cortes_salida:
@@ -923,9 +922,9 @@ class Aplicacion(tk.Tk):
         estas parado, estas emitiendo sin filtrar.
         """
         if self.motor is not None and self.motor.fallo:
-            return "El censor del MICROFONO se ha caido: emite SIN CENSURAR"
+            return "El censor del MICRÓFONO se ha caído: emite SIN CENSURAR"
         if self.motor_pc is not None and self.motor_pc.fallo:
-            return "El censor del AUDIO DEL PC se ha caido: emite SIN CENSURAR"
+            return "El censor del AUDIO DEL PC se ha caído: emite SIN CENSURAR"
         return self._flujo_parado()
 
     def _flujo_parado(self) -> str:
@@ -945,7 +944,7 @@ class Aplicacion(tk.Tk):
             if escritas != visto:
                 self._ultimo_flujo["micro"] = (escritas, ahora)
             elif ahora - cuando > 4.0:
-                return "El MICROFONO ha dejado de entrar audio (flujo parado)"
+                return "El MICRÓFONO ha dejado de entrar audio (flujo parado)"
         else:
             self._ultimo_flujo.pop("micro", None)
 
@@ -969,9 +968,9 @@ class Aplicacion(tk.Tk):
         self._aviso_sin_senal = True
         if self.motor.nivel_maximo < 0.0005:
             self._registrar(
-                "El microfono no da senal (silencio absoluto en 6 s). "
+                "El micrófono no da señal (silencio absoluto en 6 s). "
                 "Comprueba que no este silenciado: en los auriculares con "
-                "brazo, subirlo lo silencia. Mira tambien el Panel de "
+                "brazo, subirlo lo silencia. Mira también el Panel de "
                 "control de Sonido y los permisos de Windows.", "error")
 
     # ---------------------------------------------------------------
@@ -992,7 +991,7 @@ class Aplicacion(tk.Tk):
                     ("Mostrar ventana", "mostrar"),
                     ("", None),
                     ("Censor ON / OFF", "censor"),
-                    ("Silenciar / abrir microfono", "mute"),
+                    ("Silenciar / abrir micrófono", "mute"),
                     ("", None),
                     ("Salir", "salir"),
                 ],
@@ -1007,7 +1006,7 @@ class Aplicacion(tk.Tk):
                     "Bandeja del sistema",
                     "Windows no ha dejado crear el icono.\n"
                     f"({motivo})\n"
-                    "La ventana se queda como esta.")
+                    "La ventana se queda como está.")
                 return
 
         self.config_app["modo_rendimiento"] = True
@@ -1035,7 +1034,7 @@ class Aplicacion(tk.Tk):
         if self.motor is None or not self.motor.en_marcha:
             return "parado", "BEEP STREAM  -  parado"
         if self.motor.silenciado:
-            return "silenciado", "BEEP STREAM  -  MICROFONO SILENCIADO"
+            return "silenciado", "BEEP STREAM  -  MICRÓFONO SILENCIADO"
         if not self.motor.censor_activo:
             return "sin_censura", "BEEP STREAM  -  SIN CENSURA"
 
@@ -1048,7 +1047,7 @@ class Aplicacion(tk.Tk):
             fuentes_texto = (f"micro {self.motor.stats.censuras}  ·  "
                              f"PC {self.motor_pc.stats.censuras}")
         elif self.var_pc.get():
-            fuentes_texto = f"micro {self.motor.stats.censuras}  ·  PC CAIDO"
+            fuentes_texto = f"micro {self.motor.stats.censuras}  ·  PC CAÍDO"
         else:
             fuentes_texto = f"{self.motor.stats.censuras} censuras"
 
@@ -1089,6 +1088,25 @@ class Aplicacion(tk.Tk):
 
         asistente.abrir(self)
 
+    def _abrir_palabras(self) -> None:
+        """Abre el editor de listas.
+
+        Se importa aqui y no arriba porque solo hace falta cuando se
+        pulsa: son dos modulos mas que no hay que cargar al arrancar.
+        """
+        import palabras
+
+        if self._ventana_palabras is not None:
+            try:
+                self._ventana_palabras.deiconify()
+                self._ventana_palabras.lift()
+                self._ventana_palabras.focus_force()
+                return
+            except tk.TclError:
+                self._ventana_palabras = None  # se cerro por su cuenta
+
+        self._ventana_palabras = palabras.abrir(self)
+
     def _probar_beep(self) -> None:
         """Suena la censura tal y como quedaria, por los auriculares.
 
@@ -1125,11 +1143,23 @@ class Aplicacion(tk.Tk):
             messagebox.showinfo(
                 "Modo prueba",
                 "Para el censor antes de usar el modo prueba: necesita el "
-                "microfono en exclusiva.")
+                "micrófono en exclusiva.")
             return
         VentanaPrueba(self, self._indice(self.combo_entrada, self.entradas))
 
     def _cerrar(self) -> None:
+        # El editor de listas es una ventana hija: al cerrar esta se va
+        # con ella, y lo que hubiera sin guardar se perderia sin avisar.
+        if self._ventana_palabras is not None:
+            try:
+                if self._ventana_palabras.winfo_exists():
+                    self._ventana_palabras.cerrar()
+                    if self._ventana_palabras.winfo_exists():
+                        return  # ha cancelado: no se cierra el programa
+            except tk.TclError:
+                pass
+            self._ventana_palabras = None
+
         if self._bandeja is not None:
             self._bandeja.quitar()
             self._bandeja = None
@@ -1236,7 +1266,7 @@ class VentanaPrueba(tk.Toplevel):
                 self.original, ajustes, self.padre.detector, ajustes.ruta_modelo)
 
             if encontradas:
-                lineas = [f"{len(encontradas)} deteccion(es):", ""]
+                lineas = [f"{len(encontradas)} detección(es):", ""]
                 lineas += [
                     f"  {c.inicio:5.2f}s - {c.fin:5.2f}s   "
                     f"'{c.dicho}'  ->  {c.termino}"
@@ -1247,8 +1277,8 @@ class VentanaPrueba(tk.Toplevel):
             else:
                 texto = ("Sin detecciones.\n\n"
                          "Si has dicho una palabra de la lista:\n"
-                         "  · acerca el microfono y sube el volumen\n"
-                         "  · vocaliza un poco mas\n"
+                         "  · acerca el micrófono y sube el volumen\n"
+                         "  · vocaliza un poco más\n"
                          "  · comprueba que la palabra esta en palabras.txt\n"
                          "  · prueba el modelo grande si falla a menudo")
             self.after(0, lambda: self._terminar(texto))
@@ -1287,33 +1317,12 @@ class VentanaPrueba(tk.Toplevel):
             "Estan en la carpeta del programa. Borralos cuando no los necesites.")
 
 
-def _ajustar_dpi() -> None:
-    """Le dice a Windows que el programa sabe de pantallas escaladas.
-
-    Sin esto, en un portatil al 125% o 150% Windows dibuja la ventana al
-    100% y luego la amplia como si fuera una foto: los textos salen
-    borrosos. Con la marca puesta, Tk recibe el DPI real y dibuja
-    nitido.
-    """
-    import ctypes
-
-    try:
-        # 2 = por monitor, que es lo correcto con varias pantallas de
-        # escalados distintos. Solo existe desde Windows 8.1.
-        ctypes.windll.shcore.SetProcessDpiAwareness(2)
-    except (AttributeError, OSError):
-        try:
-            ctypes.windll.user32.SetProcessDPIAware()
-        except (AttributeError, OSError):
-            pass
-
-
 def main() -> None:
-    # Las dos cosas tienen que pasar antes de crear la ventana: Tk lee
-    # las tipografias disponibles y el DPI de la pantalla al arrancar y
-    # ya no vuelve a mirarlos.
+    # Todo esto tiene que pasar antes de crear la ventana: Tk lee las
+    # tipografias y el DPI al arrancar, y Windows lee la identidad de la
+    # aplicacion al crear la primera ventana. Despues ya no se miran.
     fuentes.preparar()
-    _ajustar_dpi()
+    sistema.preparar()
 
     ventana = Aplicacion()
 

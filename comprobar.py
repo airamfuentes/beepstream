@@ -65,7 +65,7 @@ if os.path.isdir("model"):
     faltan = [c for c in ("am", "conf", "graph") if not os.path.isdir(f"model/{c}")]
     if faltan:
         linea(ROJO, "carpeta model incompleta", f"faltan: {', '.join(faltan)}")
-        problemas.append("Vuelve a descargar el modelo y descomprimelo en model/")
+        problemas.append("Vuelve a descargar el modelo y descomprímelo en model/")
     else:
         tam = sum(
             os.path.getsize(os.path.join(r, f))
@@ -87,7 +87,7 @@ if os.path.exists("palabras.txt"):
         sueltas = sum(1 for t in terminos if " " not in t)
         linea(
             VERDE,
-            f"{len(terminos)} terminos",
+            f"{len(terminos)} términos",
             f"{sueltas} palabras sueltas, {len(terminos) - sueltas} frases",
         )
     except Exception as error:  # noqa: BLE001
@@ -105,7 +105,7 @@ try:
     entradas = [(i, d) for i, d in enumerate(dispositivos) if d["max_input_channels"] > 0]
     salidas = [(i, d) for i, d in enumerate(dispositivos) if d["max_output_channels"] > 0]
 
-    print("\n  ENTRADAS (microfonos):")
+    print("\n  ENTRADAS (micrófonos):")
     for i, d in entradas:
         print(f"    [{i:2}] {d['name']}")
     print("\n  SALIDAS:")
@@ -130,8 +130,8 @@ try:
         linea(AVISO, "no se encuentra 'CABLE Output' entre las entradas")
 
     if not entradas:
-        linea(ROJO, "no hay ningun microfono disponible")
-        problemas.append("Conecta un microfono y revisa los permisos de Windows")
+        linea(ROJO, "no hay ningún micrófono disponible")
+        problemas.append("Conecta un micrófono y revisa los permisos de Windows")
 
     # Censurar el audio del PC necesita captura loopback, que no la trae
     # PortAudio. Sin ella el programa funciona, pero solo con el micro.
@@ -151,10 +151,10 @@ try:
             linea(AVISO, "no hay ninguna salida que se pueda escuchar")
 
     if any("cable-a input" in d["name"].lower() for _, d in salidas):
-        linea(VERDE, "segundo cable listo", "el audio del PC ira por CABLE-A")
+        linea(VERDE, "segundo cable listo", "el audio del PC irá por CABLE-A")
     else:
         linea(AVISO, "no hay segundo cable (CABLE-A Input)",
-              "el audio del PC compartira cable con el microfono")
+              "el audio del PC compartira cable con el micrófono")
 except Exception as error:  # noqa: BLE001
     linea(ROJO, "no se puede consultar el audio", str(error))
 

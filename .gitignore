@@ -22,6 +22,10 @@ venv/
 prueba_original.wav
 prueba_censurado.wav
 
+# Copias que deja el editor de listas al guardar.
+*.txt.bak
+*.txt.tmp
+
 # Sistema
 Thumbs.db
 desktop.ini

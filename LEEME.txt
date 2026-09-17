@@ -27,7 +27,7 @@
     3. En OBS o Streamlabs: anadir CABLE Output como fuente de
        audio y QUITAR la fuente de tu microfono real.
 
-    4. Retrasar el video lo mismo que el audio (1250 ms por
+    4. Retrasar el video lo mismo que el audio (1500 ms por
        defecto), o se te vera hablar antes de oirte.
 
 
@@ -47,19 +47,23 @@
   TUS PALABRAS
   ------------
 
-  Abre palabras.txt con el bloc de notas. Una por linea. Un
-  asterisco al final cubre todo lo que empiece igual:
+  En la ventana, CENSURA > Palabras > "Editar lista". Ahi salen las
+  dos listas enteras y puedes buscar, anadir, corregir y quitar.
+  Al pulsar "Guardar y aplicar" se aplica al momento, aunque estes
+  emitiendo.
+
+  Un asterisco al final cubre todo lo que empiece igual:
 
       tonto        solo "tonto"
       tont*        tonto, tontos, tontaco, tonteria...
 
-  Las lineas que empiezan por # son comentarios.
+  La segunda pestana, "Palabras seguras", es lo contrario:
+  palabras normales que suenan parecido a una censurada y que NO
+  hay que tapar. Sirve para quitar falsos positivos.
 
-  palabras_seguras.txt es lo contrario: palabras normales que se
-  parecen a una de la lista y que NO hay que censurar.
-
-  Al guardar, pulsa "Recargar" en la ventana. No hace falta
-  reiniciar nada.
+  Tambien puedes editar palabras.txt con el bloc de notas: una por
+  linea, y las lineas que empiezan por # son comentarios. Si lo
+  haces asi, pulsa "Recargar" en la ventana al terminar.
 
 
   AUDIO DEL PC (juego, voz, musica, alertas)
@@ -95,7 +99,7 @@
       Configuracion > Privacidad y seguridad > Microfono.
 
   Se escapan palabras
-      Sube el Retardo. Por debajo de 1250 ms el reconocedor no
+      Sube el Retardo. Por debajo de 1500 ms el reconocedor no
       llega a tiempo. Comprueba tambien que la palabra este en
       palabras.txt.
 

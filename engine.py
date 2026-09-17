@@ -372,7 +372,7 @@ class NucleoCensor:
         except BaseException as error:  # noqa: BLE001
             self.fallo = str(error) or error.__class__.__name__
             self._al_registrar(
-                f"{self.etiqueta}EL RECONOCIMIENTO SE HA CAIDO ({self.fallo}). "
+                f"{self.etiqueta}EL RECONOCIMIENTO SE HA CAÍDO ({self.fallo}). "
                 "El audio esta saliendo SIN CENSURAR: para y vuelve a iniciar.",
                 "error")
             raise
@@ -410,13 +410,13 @@ class NucleoCensor:
             self.stats.tardias += 1
             self._al_registrar(
                 f"{self.etiqueta}TARDE: '{coincidencia.termino}' detectado "
-                f"{abs(margen_ms):.0f} ms despues de emitir. Sube el retardo.",
+                f"{abs(margen_ms):.0f} ms después de emitir. Sube el retardo.",
                 "error",
             )
         else:
             self._al_registrar(
                 f"{self.etiqueta}CENSURANDO: '{coincidencia.termino}' "
-                f"(oido: '{coincidencia.dicho}', margen {margen_ms:.0f} ms)",
+                f"(oído: '{coincidencia.dicho}', margen {margen_ms:.0f} ms)",
                 "censura",
             )
 
@@ -545,7 +545,7 @@ class MotorCensor(NucleoCensor):
                 ),
                 entrada,
                 entrada=True,
-                que_es="el microfono",
+                que_es="el micrófono",
             )
 
             self._salida, usada_salida = dispositivos.abrir(
@@ -569,20 +569,20 @@ class MotorCensor(NucleoCensor):
 
         if usada_entrada != entrada:
             self._al_registrar(
-                f"El microfono elegido no abria; se usa "
+                f"El micrófono elegido no abría; se usa "
                 f"{dispositivos.describir(usada_entrada)}.",
                 "error",
             )
         if usada_salida != destino:
             self._al_registrar(
-                f"La salida elegida no abria; se usa "
+                f"La salida elegida no abría; se usa "
                 f"{dispositivos.describir(usada_salida)}.",
                 "error",
             )
 
         self._al_registrar(
             f"Censor en marcha. Retardo {self.config.retardo_ms} ms, "
-            f"{self.detector.total_terminos} terminos cargados.",
+            f"{self.detector.total_terminos} términos cargados.",
             "ok",
         )
 

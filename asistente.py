@@ -26,6 +26,7 @@ import tkinter as tk
 import numpy as np
 import sounddevice as sd
 
+import config as cfg
 import dispositivos as disp
 import tema as tm
 import widgets as w
@@ -91,7 +92,7 @@ class Asistente(tk.Toplevel):
         self._niveles: queue.Queue = queue.Queue(maxsize=8)
         self._repaso: str | None = None
 
-        self.title("BEEP STREAM  ·  Guia de instalacion")
+        self.title("BEEP STREAM  ·  Guía de instalación")
         self.configure(bg=self.kit.c("fondo"))
         self.kit.registrar(self, bg="fondo")
         self.geometry(f"{ANCHO}x{ALTO}")
@@ -126,7 +127,7 @@ class Asistente(tk.Toplevel):
         w.Marca(cabecera, self.kit, 36, 21).pack(side="left", padx=(0, 12))
         titulos = self.kit.marco(cabecera, "fondo")
         titulos.pack(side="left")
-        self.kit.etiqueta(titulos, "Guia de instalacion", "titulo", "texto",
+        self.kit.etiqueta(titulos, "Guía de instalación", "titulo", "texto",
                           "fondo").pack(anchor="w")
         self.eti_paso = self.kit.etiqueta(cabecera, "", "micro", "tenue", "fondo")
         self.eti_paso.pack(side="right")
@@ -142,14 +143,14 @@ class Asistente(tk.Toplevel):
 
         pie = self.kit.marco(self, "fondo")
         pie.pack(fill="x", padx=MARGEN, pady=(0, MARGEN))
-        self.boton_atras = w.Boton(pie, self.kit, "Atras", self._atras, "sutil",
+        self.boton_atras = w.Boton(pie, self.kit, "Atrás", self._atras, "sutil",
                                    alto=11, ancho_min=10)
         self.boton_atras.pack(side="left")
         self.boton_siguiente = w.Boton(pie, self.kit, "Siguiente",
                                        self._siguiente, "principal", alto=11,
                                        ancho_min=14)
         self.boton_siguiente.pack(side="right")
-        self.boton_saltar = w.Boton(pie, self.kit, "Saltar guia", self.cerrar,
+        self.boton_saltar = w.Boton(pie, self.kit, "Saltar guía", self.cerrar,
                                     "sutil", rol="micro", alto=11)
         self.boton_saltar.pack(side="right", padx=(0, tm.ESPACIO["m"]))
 
@@ -255,8 +256,8 @@ class Asistente(tk.Toplevel):
 
     def _paso_bienvenida(self) -> None:
         self._titulo(
-            "Que hace este programa",
-            "Escucha tu microfono, reconoce las palabras que tu decidas y las "
+            "Qué hace este programa",
+            "Escucha tu micrófono, reconoce las palabras que tu decidas y las "
             "tapa con un pitido antes de que salgan al directo. Todo pasa en "
             "tu ordenador: nada se sube a internet.")
 
@@ -264,11 +265,11 @@ class Asistente(tk.Toplevel):
         lienzo.bind("<Configure>", lambda _e, c=lienzo: self._dibujar_cadena(c))
 
         self._puntos([
-            "Necesitas tres cosas: un microfono, VB-CABLE (gratis, lo "
+            "Necesitas tres cosas: un micrófono, VB-CABLE (gratis, lo "
             "instalamos en el paso 3) y OBS o Streamlabs.",
-            "La guia son siete pasos y se tarda unos diez minutos.",
-            "Puedes volver a abrirla cuando quieras desde el boton "
-            "“Guia de instalacion” de la ventana principal.",
+            "La guía son siete pasos y se tarda unos diez minutos.",
+            "Puedes volver a abrirla cuando quieras desde el botón "
+            "“Guía de instalación” de la ventana principal.",
         ])
 
     def _dibujar_cadena(self, lienzo: tk.Canvas) -> None:
@@ -286,12 +287,12 @@ class Asistente(tk.Toplevel):
         posiciones = [i * (ancho_caja + hueco) for i in range(4)]
 
         nodo(lienzo, kit, posiciones[0], y, ancho_caja, alto_caja,
-             "Tu microfono", "audio sin filtrar")
+             "Tu micrófono", "audio sin filtrar")
         nodo(lienzo, kit, posiciones[1], y, ancho_caja, alto_caja,
              "BEEP STREAM", "detecta y tapa", resaltado=True,
              tono_borde="texto")
         nodo(lienzo, kit, posiciones[2], y, ancho_caja, alto_caja,
-             "OBS", "mezcla con el video")
+             "OBS", "mezcla con el vídeo")
         nodo(lienzo, kit, posiciones[3], y, ancho_caja, alto_caja,
              "Tu directo", "ya censurado")
 
@@ -301,7 +302,7 @@ class Asistente(tk.Toplevel):
                    ["voz", "cable virtual", ""][i])
 
         rotulo(lienzo, kit, posiciones[1] + ancho_caja / 2, y + alto_caja + 26,
-               "aqui se pierde algo mas de un segundo\n(es lo que cuesta reconocer)",
+               "aquí se pierde algo más de un segundo\n(es lo que cuesta reconocer)",
                tono="tenue")
 
     # ---------------------------------------------------------------
@@ -311,29 +312,30 @@ class Asistente(tk.Toplevel):
     def _paso_retardo(self) -> None:
         retardo = int(self.config_app.retardo_ms)
         self._titulo(
-            "Por que el audio sale con retardo",
+            "Por qué el audio sale con retardo",
             "Para tapar una palabra hay que reconocerla antes, y reconocerla "
-            "lleva tiempo. La solucion es guardar tu voz en un colchon y "
-            "emitirla con unas decimas de retraso: cuando el reconocedor "
-            "avisa, esa parte todavia no ha salido y se puede tapar.")
+            "lleva tiempo. La solución es guardar tu voz en un colchón y "
+            "emitirla con unas décimas de retraso: cuando el reconocedor "
+            "avisa, esa parte todavía no ha salido y se puede tapar.")
 
         lienzo = self._lienzo(215)
         lienzo.bind("<Configure>",
                     lambda _e, c=lienzo: self._dibujar_retardo(c, retardo))
 
         self._puntos([
-            f"Ahora mismo el colchon es de {retardo} ms. Lo puedes cambiar "
+            f"Ahora mismo el colchón es de {retardo} ms. Lo puedes cambiar "
             "en la ventana principal, en CENSURA › Retardo.",
-            "Medido con este modelo de voz, el reconocedor tarda hasta 830 ms "
-            "en confirmar una palabra. Por debajo de 1250 ms empiezan a "
+            f"Lo recomendado son {cfg.RETARDO_RECOMENDADO} ms: el "
+            "reconocedor tarda hasta 830 ms en confirmar una palabra y "
+            "trabaja con ventanas de 800 ms. Por debajo de ahí empiezan a "
             "escaparse.",
             "El retardo solo afecta al directo. Tu te sigues oyendo al "
             "instante en los auriculares.",
         ])
 
         self._aviso(
-            "Este retardo hay que repetirlo despues en el video, o tu boca "
-            "ira por delante de tu voz. Se explica en el paso 6.")
+            "Este retardo hay que repetirlo después en el vídeo, o tu boca "
+            "irá por delante de tu voz. Se explica en el paso 6.")
 
     # Cuanto dura una palabra corta al hablar. Solo sirve para que las
     # pastillas del diagrama tengan un ancho creible.
@@ -370,7 +372,7 @@ class Asistente(tk.Toplevel):
                                fill=kit.c(tono), width=1, dash=(2, 4))
 
         # --- sin colchon ---
-        rotulo(lienzo, kit, izquierda - 14, y_sin, "SIN colchon", "fuerte",
+        rotulo(lienzo, kit, izquierda - 14, y_sin, "SIN colchón", "fuerte",
                "tenue", anclaje="e")
         w.pill(lienzo, x_de(0), y_sin - 11, x_de(self.DURACION_PALABRA),
                y_sin + 11, kit.c("tenue"))
@@ -381,7 +383,7 @@ class Asistente(tk.Toplevel):
                anclaje="w")
 
         # --- con colchon ---
-        rotulo(lienzo, kit, izquierda - 14, y_con, "CON colchon", "fuerte",
+        rotulo(lienzo, kit, izquierda - 14, y_con, "CON colchón", "fuerte",
                "texto", anclaje="e")
         w.pill(lienzo, x_de(0), y_con - 11, x_de(self.DURACION_PALABRA),
                y_con + 11, kit.c("apagado"))
@@ -426,12 +428,12 @@ class Asistente(tk.Toplevel):
         lienzo.bind("<Configure>", lambda _e, c=lienzo: self._dibujar_cable(c))
 
         self._puntos([
-            "Descarga el paquete, descomprimelo y ejecuta "
-            "VBCABLE_Setup_x64.exe con el boton derecho › Ejecutar como "
+            "Descarga el paquete, descomprímelo y ejecuta "
+            "VBCABLE_Setup_x64.exe con el botón derecho › Ejecutar como "
             "administrador.",
             "Cuando termine, reinicia Windows. Sin reiniciar, los "
             "dispositivos no aparecen del todo.",
-            "No hace falta tocar nada mas: no cambies la salida "
+            "No hace falta tocar nada más: no cambies la salida "
             "predeterminada de Windows.",
         ])
 
@@ -468,7 +470,7 @@ class Asistente(tk.Toplevel):
         x = [i * (ancho_caja + hueco) for i in range(3)]
 
         nodo(lienzo, kit, x[0], y, ancho_caja, alto_caja, "BEEP STREAM",
-             "envia tu voz ya censurada")
+             "envía tu voz ya censurada")
         nodo(lienzo, kit, x[1], y, ancho_caja, alto_caja, "VB-CABLE",
              "el cable que no existe", resaltado=True, tono_borde="texto")
         nodo(lienzo, kit, x[2], y, ancho_caja, alto_caja, "OBS",
@@ -498,12 +500,12 @@ class Asistente(tk.Toplevel):
             self.punto_cable.poner("texto")
             texto = "VB-CABLE detectado. Puedes seguir."
             if segundo:
-                texto += "  (y tambien el segundo cable, CABLE-A)"
+                texto += "  (y también el segundo cable, CABLE-A)"
             self.eti_cable.configure(text=texto, fg=self.kit.c("texto"))
         else:
             self.punto_cable.poner("peligro")
             self.eti_cable.configure(
-                text="Todavia no aparece. Instalalo y reinicia Windows.",
+                text="Todavía no aparece. Instalalo y reinicia Windows.",
                 fg=self.kit.c("peligro"))
 
     # ---------------------------------------------------------------
@@ -512,9 +514,9 @@ class Asistente(tk.Toplevel):
 
     def _paso_dispositivos(self) -> None:
         self._titulo(
-            "Elige el microfono y la salida",
-            "La entrada es tu microfono de verdad. La salida tiene que ser "
-            "CABLE Input: ahi es donde el programa deja tu voz ya censurada "
+            "Elige el micrófono y la salida",
+            "La entrada es tu micrófono de verdad. La salida tiene que ser "
+            "CABLE Input: ahí es donde el programa deja tu voz ya censurada "
             "para que OBS la recoja.")
 
         self.entradas = disp.listar(entrada=True)
@@ -548,11 +550,11 @@ class Asistente(tk.Toplevel):
 
         self._puntos([
             "Habla ahora: la barra tiene que moverse y quedarse por la mitad. "
-            "Si llega al final en rojo, baja el volumen del microfono en "
+            "Si llega al final en rojo, baja el volumen del micrófono en "
             "Windows.",
-            "Si la barra no se mueve, el microfono esta silenciado o Windows "
+            "Si la barra no se mueve, el micrófono está silenciado o Windows "
             "no da permiso a las aplicaciones de escritorio.",
-            "Lo que elijas aqui se guarda y aparecera ya puesto en la ventana "
+            "Lo que elijas aquí se guarda y aparecerá ya puesto en la ventana "
             "principal.",
         ])
 
@@ -598,7 +600,7 @@ class Asistente(tk.Toplevel):
                 device=indice, channels=1, samplerate=48000, blocksize=2048,
                 dtype="float32", callback=llegada)
             self._escucha.start()
-            self.eti_nivel.configure(text="Escuchando el microfono…",
+            self.eti_nivel.configure(text="Escuchando el micrófono…",
                                      fg=self.kit.c("tenue"))
         except Exception as error:  # noqa: BLE001
             self._escucha = None
@@ -659,7 +661,7 @@ class Asistente(tk.Toplevel):
         self._titulo(
             "Configura OBS o Streamlabs",
             "Solo hay que hacer dos cosas: añadir CABLE Output como fuente de "
-            "audio y quitar el microfono crudo. Si dejas los dos, tu voz sale "
+            "audio y quitar el micrófono crudo. Si dejas los dos, tu voz sale "
             "dos veces y una de ellas sin censurar.")
 
         lienzo = self._lienzo(190)
@@ -668,12 +670,12 @@ class Asistente(tk.Toplevel):
         self._puntos([
             "Ajustes › Audio › Dispositivo de audio auxiliar: elige "
             "CABLE Output (VB-Audio Virtual Cable).",
-            "En el mezclador, silencia o quita la fuente de tu microfono "
+            "En el mezclador, silencia o quita la fuente de tu micrófono "
             "real. Es la que lleva el audio sin filtrar.",
             "Deja la frecuencia de muestreo de OBS en 48 kHz, la misma que "
             "usa el cable: si no coinciden, el audio se va desincronizando.",
-            "En la fuente CABLE Output no pongas ningun retardo. El retardo "
-            "ya viene aplicado desde aqui.",
+            "En la fuente CABLE Output no pongas ningún retardo. El retardo "
+            "ya viene aplicado desde aquí.",
         ])
 
     def _dibujar_mezclador(self, lienzo: tk.Canvas) -> None:
@@ -693,7 +695,7 @@ class Asistente(tk.Toplevel):
 
         filas = (
             ("CABLE Output  (VB-Audio)", "tu voz ya censurada", True),
-            ("Mic/Aux  ·  tu microfono", "quitalo o silencialo", False),
+            ("Mic/Aux  ·  tu micrófono", "quítalo o siléncialo", False),
             ("Audio del escritorio", "el sonido del PC, si lo usas", None),
         )
         for i, (nombre, nota, bien) in enumerate(filas):
@@ -716,30 +718,31 @@ class Asistente(tk.Toplevel):
     def _paso_video(self) -> None:
         retardo = int(self.config_app.retardo_ms)
         self._titulo(
-            "Cuadra el video con la voz",
-            f"Tu voz sale {retardo} ms mas tarde que tu imagen, asi que en el "
-            "directo se veria tu boca moverse antes de oirte. Se arregla "
-            "retrasando el video la misma cantidad.")
+            "Cuadra el vídeo con la voz",
+            f"Tu voz sale {retardo} ms más tarde que tu imagen, así que en el "
+            "directo se vería tu boca moverse antes de oírte. Se arregla "
+            "retrasando el vídeo la misma cantidad.")
 
         lienzo = self._lienzo(200)
         lienzo.bind("<Configure>",
                     lambda _e, c=lienzo: self._dibujar_sincronia(c, retardo))
 
         self._puntos([
-            f"En OBS: boton derecho sobre la camara › Filtros › + › "
-            f"Retardo de video (asincrono) › {retardo} ms.",
-            f"Haz lo mismo con la captura del juego y con las alertas: todo "
-            f"lo que se vea tiene que ir {retardo} ms por detras.",
-            "El audio del juego y la musica, si los censuras tambien, ya "
+            f"En OBS: botón derecho sobre la cámara › Filtros › + › "
+            f"Retardo de vídeo (asíncrono) › {retardo} ms.",
+            f"Repitelo en TODAS las fuentes que se vean: captura del juego, "
+            f"pantalla, alertas, cámaras secundarias. Todas con los mismos "
+            f"{retardo} ms.",
+            "El audio del juego y la música, si los censuras también, ya "
             "salen retrasados por el mismo camino: no les añadas nada.",
             "Lo que NO hay que retrasar es lo que tu oyes por los "
             "auriculares. Eso va directo y sin retardo.",
         ])
 
         self._aviso(
-            f"El retardo de video de OBS gasta memoria de video: guarda "
-            f"{retardo} ms de imagen de cada fuente. Si la grafica va justa, "
-            "retrasa solo la camara, que es donde se nota el desfase.")
+            "Retrásalo todo por igual. Dejar una sola fuente sin retardo "
+            "hace que unas cosas vayan a un tiempo y otras a otro, y eso se "
+            "nota mucho más que el desfase original.")
 
     def _dibujar_sincronia(self, lienzo: tk.Canvas, retardo: int) -> None:
         """Dos barras: el video llega antes; retrasandolo, cuadran."""
@@ -764,7 +767,7 @@ class Asistente(tk.Toplevel):
             x_video = izquierda + (paso if arreglado else 0)
             w.pill(lienzo, x_video, y - 14, x_video + paso, y + 2,
                    kit.c("suave"))
-            rotulo(lienzo, kit, x_video + paso / 2, y - 6, "VIDEO", "micro",
+            rotulo(lienzo, kit, x_video + paso / 2, y - 6, "VÍDEO", "micro",
                    "sobre_tinta" if kit.tema == "claro" else "fondo")
 
             x_voz = izquierda + paso
@@ -782,7 +785,7 @@ class Asistente(tk.Toplevel):
                                    fill=kit.c("peligro"), width=1,
                                    arrow="both", arrowshape=(6, 7, 3))
                 rotulo(lienzo, kit, izquierda + paso / 2, y + 62,
-                       f"{retardo} ms de desfase: se te ve antes de oirte",
+                       f"{retardo} ms de desfase: se te ve antes de oírte",
                        tono="peligro")
 
     # ---------------------------------------------------------------
@@ -791,10 +794,10 @@ class Asistente(tk.Toplevel):
 
     def _paso_final(self) -> None:
         self._titulo(
-            "Ya esta",
+            "Ya está",
             "Todo lo que has configurado queda guardado. Antes de emitir, "
             "conviene hacer una prueba: el modo prueba graba unos segundos y "
-            "te deja comparar el antes y el despues sin emitir nada.")
+            "te deja comparar el antes y el después sin emitir nada.")
 
         lienzo = self._lienzo(150)
         lienzo.bind("<Configure>", lambda _e, c=lienzo: self._dibujar_resumen(c))
@@ -803,7 +806,7 @@ class Asistente(tk.Toplevel):
             "Pulsa INICIAR y habla: el nivel se mueve y las detecciones van "
             "saliendo en Actividad.",
             "Edita palabras.txt para poner tus propias palabras, una por "
-            "linea, y pulsa Recargar. No hace falta reiniciar.",
+            "línea, y pulsa Recargar. No hace falta reiniciar.",
             "Si vas justo de CPU, usa Segundo plano: el censor sigue y la "
             "ventana se esconde en la bandeja del reloj.",
         ])
@@ -823,7 +826,7 @@ class Asistente(tk.Toplevel):
         comprobaciones = (
             ("VB-CABLE instalado",
              any("cable input" in n.lower() for _, n in salidas)),
-            ("Microfono disponible", bool(entradas)),
+            ("Micrófono disponible", bool(entradas)),
             ("Modelo de voz cargado", modelo),
         )
 

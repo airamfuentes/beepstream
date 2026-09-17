@@ -18,6 +18,13 @@ VERSION = "1.0.0"
 
 RUTA_CONFIG = "config.json"
 
+# Retardo recomendado, en milisegundos. Sale de sumar el peor caso
+# medido del reconocedor (830 ms para confirmar una palabra) y la
+# ventana de reconocimiento de 800 ms que usa recognizer.py: con 1500
+# quedan unos 670 ms de margen. Por debajo de este valor la ventana
+# avisa antes de arrancar, porque empiezan a escaparse palabras.
+RETARDO_RECOMENDADO = 1500
+
 # Rutas: se guardan relativas y se entregan absolutas, para que el .exe
 # las encuentre esten sueltas o empaquetadas dentro.
 CLAVES_RUTA = frozenset(
@@ -35,7 +42,7 @@ POR_DEFECTO: dict = {
     # Colchon para detectar antes de emitir. Es el ajuste critico: por
     # debajo del peor caso del reconocedor las palabras se escapan.
     # Calibralo con:  py -3.11 herramientas/medir_latencia.py grabacion.wav
-    "retardo_ms": 1250,
+    "retardo_ms": RETARDO_RECOMENDADO,
     "beep_ms": 250,  # duracion del sonido generado (solo estilo "tono")
     "beep_volumen": 0.22,  # 0.0 a 1.0 (~ -13 dBFS)
     "beep_tono_hz": 800,  # Hz. Mas bajo = mas suave (solo estilo "tono")
@@ -85,10 +92,7 @@ POR_DEFECTO: dict = {
 # flujo de audio con riesgo de acople, y OBS ya lo hace mejor.
 
 # Valores de los desplegables de la ventana.
-RETARDOS = [750, 1000, 1250, 1500, 2000]
-# Peor caso medido del reconocedor (830 ms) mas margen. Por debajo de
-# aqui la ventana avisa, porque empiezan a escaparse palabras.
-RETARDO_MINIMO_SEGURO = 1250
+RETARDOS = [1000, 1250, 1500, 1750, 2000, 2500]
 DURACIONES_BEEP = [150, 200, 250, 300, 400, 500]
 VOLUMENES_BEEP = [0.08, 0.12, 0.18, 0.22, 0.30, 0.40, 0.55]
 TONOS_BEEP = [500, 600, 700, 800, 1000, 1200]
@@ -153,7 +157,7 @@ def cargar(ruta: str = RUTA_CONFIG) -> Config:
                 guardado = json.load(fichero)
             except json.JSONDecodeError as error:
                 raise SystemExit(
-                    f"config.json tiene un error de formato (linea {error.lineno}): "
+                    f"config.json tiene un error de formato (línea {error.lineno}): "
                     f"{error.msg}\nBorralo para regenerarlo con los valores por defecto."
                 )
         datos.update({k: v for k, v in guardado.items() if k in POR_DEFECTO})

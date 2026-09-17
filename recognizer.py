@@ -242,7 +242,7 @@ class Reconocedor:
         if not os.path.isdir(ruta_modelo):
             raise FileNotFoundError(
                 f"No existe la carpeta del modelo: {ruta_modelo}\n"
-                "Descarga vosk-model-small-es-0.42 y descomprimelo ahi."
+                "Descarga vosk-model-small-es-0.42 y descomprímelo ahí."
             )
 
         vosk.SetLogLevel(-1)  # sin ruido de Kaldi en la consola

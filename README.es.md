@@ -148,7 +148,7 @@ hay que mirarlo.
 
 ### El retardo
 
-Por defecto son 1250 ms. Es el ajuste critico: por debajo de ahi el reconocedor
+Por defecto son 1500 ms, que es lo recomendado. Es el ajuste critico: por debajo
 no llega a tiempo y las palabras se escapan. Se cambia en **CENSURA › Retardo**.
 
 Ese mismo retardo hay que repetirlo en el video de OBS (camara, captura de
@@ -169,6 +169,18 @@ lista tambien se lleva su pitido. En OBS hay que quitar o silenciar la fuente
 ---
 
 ## Tus palabras
+
+Desde la ventana principal, **CENSURA › Palabras › Editar lista** abre el editor:
+las dos listas enteras, con buscador, altas, bajas y correcciones. Al pulsar
+*Guardar y aplicar* se escribe en los ficheros y se recarga el detector sin
+cortar el audio, aunque estes emitiendo.
+
+<p align="center">
+  <img src="docs/palabras.png" alt="Editor de listas" width="70%">
+</p>
+
+Los ficheros se siguen pudiendo editar a mano, que es lo mismo: el editor
+respeta los comentarios y las categorias, asi que los dos caminos conviven.
 
 `palabras.txt` se abre con el bloc de notas. Una palabra o frase por linea:
 
@@ -241,7 +253,10 @@ main.py            arranque, argumentos, modo consola
 │   ├── tema.py    paleta monocroma, escala tipografica y espaciado
 │   ├── marca.py   geometria del logo, compartida con el generador de iconos
 │   ├── fuentes.py carga Inter solo para el proceso, sin instalarla
-│   └── asistente.py   guia de primer arranque, diagramas en lienzo
+│   ├── sistema.py Windows: identidad, iconos, DPI y barra de titulo
+│   ├── asistente.py   guia de primer arranque, diagramas en lienzo
+│   ├── palabras.py    editor de las listas
+│   └── listas.py      lectura y escritura respetando los comentarios
 ├── engine.py      buffer circular, nucleo del censor, motor del microfono
 ├── escritorio.py  segundo motor: audio del PC por loopback de WASAPI
 ├── recognizer.py  envoltorio de Vosk, decimacion y ganancia
@@ -253,7 +268,7 @@ main.py            arranque, argumentos, modo consola
 └── rutas.py       rutas distintas para codigo y para ejecutable empaquetado
 ```
 
-La explicacion de las decisiones tecnicas (por que el retardo son 1250 ms y no
+La explicacion de las decisiones tecnicas (por que el retardo son 1500 ms y no
 630, como se evitan los falsos positivos, por que hay dos censores
 independientes) esta en el [README en ingles](README.md#the-engineering-problem).
 
@@ -265,6 +280,7 @@ independientes) esta en el [README en ingles](README.md#the-engineering-problem)
 py -3.11 tests/test_matcher.py            # coincidencia fonetica, sin hardware
 py -3.11 tests/test_engine.py             # buffer, DSP, logica de tramos
 py -3.11 tests/test_falsos_positivos.py   # audita la lista real de palabras
+py -3.11 tests/test_interfaz.py           # paleta, tipografia, listas y ventanas
 py -3.11 tests/test_integracion.py        # audio → Vosk → deteccion → pitido
 py -3.11 tests/test_audio.py              # abre dispositivos de verdad
 py -3.11 tests/test_cable.py              # extremo a extremo por VB-CABLE

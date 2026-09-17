@@ -34,6 +34,7 @@ import dispositivos as disp  # noqa: E402
 import escritorio  # noqa: E402
 import fuentes  # noqa: E402
 import gui  # noqa: E402
+import sistema  # noqa: E402
 
 DOCS = os.path.join(RAIZ, "docs")
 
@@ -58,7 +59,7 @@ CAPTURABLES = [
 # Ajustes de la captura: los de fabrica, mas el canal del PC encendido
 # para que se vea la tarjeta entera en vez de a medias.
 AJUSTES = {
-    "retardo_ms": 1250,
+    "retardo_ms": 1500,
     "beep_ms": 250,
     "beep_estilo": "shhh",
     "beep_volumen": 0.22,
@@ -96,7 +97,7 @@ def main() -> None:
     os.makedirs(DOCS, exist_ok=True)
     falsear_dispositivos()
     fuentes.preparar()
-    gui._ajustar_dpi()
+    sistema.preparar()
 
     app = gui.Aplicacion()
     for clave, valor in AJUSTES.items():
@@ -124,6 +125,12 @@ def main() -> None:
             guia.paso = paso
             guia._mostrar()
             recortar(guia, os.path.join(DOCS, f"{nombre}.png"))
+        guia.withdraw()
+
+        import palabras
+        editor = palabras.VentanaPalabras(app)
+        recortar(editor, os.path.join(DOCS, "palabras.png"))
+        editor.destroy()
 
         app.quit()
 
