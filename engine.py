@@ -38,7 +38,7 @@ TAMANO_BLOQUE_MS = 30  # 1440 muestras a 48 kHz, multiplo exacto de 3
 MARGEN_BUFFER_MS = 2000  # colchon extra de la linea de retardo
 TOLERANCIA_DERIVA_MS = 150  # antes de recortar por desfase de relojes
 
-# El segundo plano NO toca el reconocimiento a proposito: lo que apaga
+# El modo rendimiento NO toca el reconocimiento a proposito: lo que apaga
 # es la interfaz, que es gratis y no arriesga nada. El abaratamiento del
 # reconocimiento se hizo por otra via (ver recognizer.py): 3 canales de
 # 800 ms en vez de 4 de 600 y sin resultados parciales, que salio a

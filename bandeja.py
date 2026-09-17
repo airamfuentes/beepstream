@@ -125,7 +125,7 @@ def _recurso(numero: int):
 
 
 # Cada bandeja registra su propia clase de ventana. Si compartieran
-# nombre, la segunda vez que se pasa a segundo plano Windows
+# nombre, la segunda vez que se entra en modo rendimiento Windows
 # reutilizaria la clase vieja, que apunta a un WNDPROC ya liberado, y
 # el programa se cae al primer mensaje.
 _CONTADOR = itertools.count(1)
@@ -201,7 +201,7 @@ class Bandeja:
     def _icono(self, estado: str):
         """Handle del icono del estado, cacheado.
 
-        En segundo plano esto se pedia una vez por segundo durante
+        En modo rendimiento esto se pedia una vez por segundo durante
         horas, y los iconos son siempre los mismos cuatro: se cargan a
         la primera y se reutilizan.
 
@@ -350,7 +350,7 @@ class Bandeja:
     def actualizar(self, estado: str, texto: str) -> None:
         """Cambia el icono y el texto que sale al pasar el raton.
 
-        Si no ha cambiado nada no se toca a Windows. En segundo plano
+        Si no ha cambiado nada no se toca a Windows. En modo rendimiento
         la ventana llama a esto cada segundo, y casi siempre para decir
         exactamente lo mismo que la vez anterior.
         """

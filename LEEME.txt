@@ -37,8 +37,8 @@
     INICIAR            arranca el censor
     CENSOR ON / OFF    deja pasar el audio sin filtrar
     MUTE               silencia el microfono del todo
-    Modo prueba        graba 8 s y te deja comparar antes de emitir
-    Segundo plano      esconde la ventana en la bandeja del reloj
+    MODO PRUEBA        graba 8 s y te deja comparar antes de emitir
+    MODO RENDIMIENTO   esconde la ventana en la bandeja del reloj
 
   Mientras emites, mira la cabecera. Si pone algo en ROJO, hay que
   mirarlo: es la unica cosa de la ventana que se pinta en color.

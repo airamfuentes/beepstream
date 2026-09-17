@@ -119,7 +119,7 @@ class Aplicacion(tk.Tk):
         # activado) sin tumbar el del microfono, que es el critico.
         self.motor_pc: escritorio.MotorEscritorio | None = None
         self.mensajes: queue.Queue = queue.Queue()
-        # Los avisos que aun no se han pintado. En segundo plano la
+        # Los avisos que aun no se han pintado. En modo rendimiento la
         # ventana esta escondida y nadie los recoge, asi que se guardan
         # aqui con tope: un directo largo llenaria la cola de miles de
         # lineas que ademas el registro acabaria recortando igual.
@@ -237,9 +237,10 @@ class Aplicacion(tk.Tk):
         extras = self.kit.marco(self, "fondo")
         extras.pack(fill="x", padx=tm.ESPACIO["l"], pady=(0, tm.ESPACIO["m"]))
         for texto, accion, relleno in (
-                ("Modo prueba", self._abrir_prueba, (0, tm.ESPACIO["s"])),
-                ("Segundo plano", self._activar_rendimiento, (0, tm.ESPACIO["s"])),
-                ("Guía de instalación", self._abrir_asistente, (0, 0))):
+                ("MODO PRUEBA", self._abrir_prueba, (0, tm.ESPACIO["s"])),
+                ("MODO RENDIMIENTO", self._activar_rendimiento,
+                 (0, tm.ESPACIO["s"])),
+                ("GUÍA DE INSTALACIÓN", self._abrir_asistente, (0, 0))):
             boton = w.Boton(extras, self.kit, texto, accion, "normal", alto=8)
             boton.pack(side="left", fill="x", expand=True, padx=relleno)
 
@@ -974,7 +975,7 @@ class Aplicacion(tk.Tk):
                 "control de Sonido y los permisos de Windows.", "error")
 
     # ---------------------------------------------------------------
-    #  Segundo plano: a la bandeja del sistema
+    #  Modo rendimiento: a la bandeja del sistema
     # ---------------------------------------------------------------
 
     def _activar_rendimiento(self) -> None:
@@ -1038,7 +1039,7 @@ class Aplicacion(tk.Tk):
         if not self.motor.censor_activo:
             return "sin_censura", "BEEP STREAM  -  SIN CENSURA"
 
-        # En segundo plano el globo es lo unico que se ve, asi que dice
+        # En modo rendimiento el globo es lo unico que se ve, asi que dice
         # tambien si el canal del PC sigue vivo. Que se caiga sin avisar
         # y se emita el juego sin filtrar es justo lo que no puede pasar
         # sin que nadie se entere.

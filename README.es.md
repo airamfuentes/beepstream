@@ -129,9 +129,9 @@ mientras hablas.
 | **INICIAR** | arranca el censor |
 | **CENSOR ON / OFF** | deja pasar el audio sin filtrar, sin parar nada |
 | **MUTE** | silencia el microfono del todo |
-| **Modo prueba** | graba 8 s y te deja comparar el antes y el despues sin emitir |
-| **Segundo plano** | esconde la ventana en la bandeja del reloj |
-| **Guia de instalacion** | vuelve a abrir la guia de los siete pasos |
+| **MODO PRUEBA** | graba 8 s y te deja comparar el antes y el despues sin emitir |
+| **MODO RENDIMIENTO** | esconde la ventana en la bandeja del reloj |
+| **GUIA DE INSTALACION** | vuelve a abrir la guia de los siete pasos |
 
 Mientras emites, lo que hay que mirar es la cabecera:
 

@@ -805,9 +805,9 @@ class Asistente(tk.Toplevel):
         self._puntos([
             "Pulsa INICIAR y habla: el nivel se mueve y las detecciones van "
             "saliendo en Actividad.",
-            "Edita palabras.txt para poner tus propias palabras, una por "
-            "línea, y pulsa Recargar. No hace falta reiniciar.",
-            "Si vas justo de CPU, usa Segundo plano: el censor sigue y la "
+            "Para poner tus propias palabras: CENSURA › Palabras › "
+            "“Editar lista”. Se aplica al momento, aunque estés emitiendo.",
+            "Si vas justo de CPU, usa MODO RENDIMIENTO: el censor sigue y la "
             "ventana se esconde en la bandeja del reloj.",
         ])
 
