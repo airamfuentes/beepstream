@@ -4,134 +4,154 @@
 
 <p align="center">
   <strong>Censor de audio en tiempo real para directos.</strong><br>
-  Reconocimiento de voz offline, deteccion por debajo del segundo, sin que el audio salga del ordenador.
+  Escucha lo que dices, reconoce las palabras que tú elijas y las tapa con un
+  sonido antes de que salgan a la emisión.
 </p>
 
 <p align="center">
-  <a href="#como-funciona">Como funciona</a> ·
-  <a href="#instalacion">Instalacion</a> ·
+  <img alt="Windows 10+" src="https://img.shields.io/badge/Windows-10%2B-111?style=flat-square">
+  <img alt="Python 3.11" src="https://img.shields.io/badge/Python-3.11-111?style=flat-square">
+  <img alt="Offline" src="https://img.shields.io/badge/100%25-offline-111?style=flat-square">
+  <img alt="MIT" src="https://img.shields.io/badge/licencia-MIT-111?style=flat-square">
+</p>
+
+<p align="center">
+  <a href="#descargar">Descargar</a> ·
+  <a href="#cómo-funciona">Cómo funciona</a> ·
+  <a href="#stack-tecnológico">Stack tecnológico</a> ·
+  <a href="#qué-trae">Qué trae</a> ·
   <a href="#uso-diario">Uso diario</a> ·
-  <a href="#tus-palabras">Tus palabras</a> ·
-  <a href="#problemas">Problemas</a> ·
-  <a href="README.md">English</a>
+  <a href="README.md">🇬🇧 English</a>
 </p>
 
 ---
 
-Un insulto en directo puede costar un canal. Cuando la emision *es* el producto,
-no hay postproduccion donde meter el pitido. BEEP STREAM se coloca entre el
-microfono y el programa de emision, escucha cada palabra y tapa las que tu
-decidas con un sonido suave, antes de que lleguen a nadie.
+Un insulto en directo puede costar un canal, y cuando la emisión **es** el
+producto no hay postproducción donde meter el pitido. BEEP STREAM se coloca entre
+el micrófono y OBS: guarda tu voz durante segundo y medio, la va transcribiendo, y
+si aparece una palabra de tu lista sustituye justo ese fragmento por un sonido
+suave antes de que llegue a nadie.
 
-Todo se ejecuta en local y en CPU. Sin API, sin cuenta, sin conexion.
+Todo se ejecuta en local y en CPU. Sin API, sin cuenta, sin conexión.
 
 <p align="center">
   <img src="docs/ventana.png" alt="Ventana principal" width="49%">
-  <img src="docs/asistente.png" alt="Guia de instalacion" width="49%">
+  <img src="docs/asistente.png" alt="Guía de instalación" width="49%">
 </p>
 
 ---
 
-## Como funciona
+## Descargar
 
-Windows no deja meter un programa entre un microfono y otra aplicacion, asi que
-el audio da un rodeo por un cable virtual:
+**[⬇ Descargar el instalador](../../releases/latest)** — lo ejecutas y ya está. No
+pide permisos de administrador, crea los accesos directos y deja su desinstalador.
+
+También necesitas [VB-CABLE](https://vb-audio.com/Cable/), que es gratuito. El
+programa detecta solo si lo tienes instalado y te lleva a él si no.
+
+La primera vez que lo abras se abre una guía de siete pasos que lo explica todo
+con dibujos: qué es VB-CABLE, por qué hay retardo, qué tocar en OBS y cómo cuadrar
+el vídeo con la voz.
+
+---
+
+## Cómo funciona
+
+Windows no deja meter un programa entre un micrófono y otra aplicación, así que el
+audio da un rodeo por un cable virtual:
 
 ```
-microfono ──► BEEP STREAM ──► CABLE Input ══╗
+micrófono ──► BEEP STREAM ──► CABLE Input ══╗
                                             ║  VB-CABLE
               OBS ◄── CABLE Output ═════════╝
 ```
 
-Dentro, la señal se parte en dos caminos:
+Dentro, la señal se parte en dos caminos que no se bloquean entre sí:
 
-- El **camino del audio** guarda cada bloque que entra en un buffer circular y
-  lo saca `N` milisegundos despues. Ese retardo es todo el truco: compra tiempo
-  para decidir antes de que el audio salga sin remedio.
-- El **camino del reconocimiento** coge una copia del mismo audio, lo baja a
-  16 kHz y se lo pasa a [Vosk](https://alphacephei.com/vosk/), que devuelve cada
-  palabra reconocida con su inicio y su final. Lo que coincide con la lista se
-  apunta como un tramo a tapar; cuando el cursor de reproduccion llega ahi, el
-  contenido del buffer se sustituye por el sonido de censura.
+| Camino | Qué hace |
+|---|---|
+| **Audio** | Guarda cada bloque que entra en un buffer circular y lo saca 1500 ms después. Ese retardo es todo el truco: compra tiempo para decidir antes de que el audio salga sin remedio. |
+| **Reconocimiento** | Coge una copia, la baja de 48 a 16 kHz y se la pasa a Vosk, que devuelve cada palabra con su inicio y su final. Lo que coincide se apunta como un tramo; cuando el cursor de reproducción llega ahí, el contenido del buffer se sustituye por el sonido de censura. |
 
-Los dos caminos no se bloquean entre si. El reconocimiento va en su propio hilo
-y se comunica por una lista de tramos sin cerrojos, de forma que una
-transcripcion lenta se traduce en una palabra que se escapa, nunca en un corte
-en la emision.
+El reconocimiento va en su propio hilo, así que una transcripción lenta se traduce
+en una palabra que se escapa, nunca en un corte en la emisión.
 
----
+### Por qué 1500 ms
 
-## Instalacion
+Vosk tarda hasta **830 ms** en confirmar una palabra, y el reconocedor trabaja con
+tres ventanas solapadas de **800 ms** (que detectan más que cuatro de 600 gastando
+un 26 % menos de CPU). 830 + 800 marca el suelo; con 1500 ms quedan unos 670 ms de
+margen. El programa avisa antes de arrancar si bajas de ahí.
 
-### Si solo quieres usarlo
+### No pitar sobre palabras inocentes
 
-Descarga el instalador de [Releases](../../releases) y ejecutalo. No pide
-permisos de administrador, crea los accesos directos y deja su desinstalador.
+Un modelo de voz pequeño oye mal a menudo. Comparar literalmente se pierde
+`"joer"` por `"joder"`; comparar a lo ancho pita sobre `"pescado"`. Por eso la
+comparación es **fonética**: una clave pensada para el castellano que iguala
+`b/v`, `y/ll`, `c/k/q`, la `h` muda y el seseo `s/z/c`, más distancia de edición
+acotada, en tres niveles de sensibilidad. Una segunda lista guarda las palabras
+normales que chocan fonéticamente con una censurada y las deja pasar.
 
-La primera vez que lo abras se abre sola una guia que lo explica todo paso a
-paso y con dibujos: que es VB-CABLE, por que hay retardo, que tocar en OBS y
-como cuadrar el video con la voz.
-
-Ademas necesitaras [VB-CABLE](https://vb-audio.com/Cable/), que es gratuito. La
-guia comprueba si ya lo tienes y te lleva a el si no.
-
-### Desde el codigo
-
-```bash
-git clone https://github.com/airamfuentes/beep-stream
-cd beep-stream
-instalar.bat          # dependencias + modelo de espanol de Vosk (~40 MB)
-BeepStream.bat        # arrancar
-```
-
-Hace falta Python 3.11 en Windows 10 o posterior.
-
-### Generar el instalador
-
-```bash
-construir.bat                  # PyInstaller + Inno Setup → publicar\
-construir.bat sininstalador    # solo la carpeta portable
-```
-
-Si falta Inno Setup, el script lo instala con winget.
+La asimetría es a propósito: un falso negativo cuesta un canal, un falso positivo
+cuesta un pitido incómodo.
 
 ---
 
-## La guia de primer arranque
+## Stack tecnológico
 
-Hay tres cosas de este montaje que no se adivinan solas: que hace falta un cable
-de audio virtual, que el audio sale con mas de un segundo de retardo, y que ese
-mismo retardo hay que repetirlo en el video o la boca deja de cuadrar con la
-voz. Un muro de texto lo explica mal, asi que la primera vez que se abre el
-programa hay siete pasos, cada uno con su diagrama dibujado, y lo que se puede
-comprobar se comprueba en vivo.
+| | |
+|---|---|
+| **Lenguaje** | Python 3.11 |
+| **Reconocimiento de voz** | [Vosk](https://alphacephei.com/vosk/) 0.3.45 — offline, en CPU, con marcas de tiempo por palabra (modelo de español, 40 MB) |
+| **Entrada y salida de audio** | [sounddevice](https://python-sounddevice.readthedocs.io/) (PortAudio / WASAPI) para micrófono y salida |
+| **Audio del PC** | [PyAudioWPatch](https://github.com/s0d3s/PyAudioWPatch) — captura loopback de WASAPI, que PortAudio no expone |
+| **Procesado de señal** | NumPy: buffer circular, filtro antialiasing, diezmado, mezcla y síntesis del tono |
+| **Interfaz** | Tkinter más un kit de componentes propio (`widgets.py`), tokens de diseño monocromos (`tema.py`), y logo y diagramas dibujados en lienzo |
+| **Tipografía** | [Inter](https://rsms.me/inter/), empaquetada y registrada solo para el proceso: no se instala nada en el sistema |
+| **Bandeja del sistema** | Win32 puro con `ctypes` — sin dependencias extra |
+| **Integración con Windows** | `ctypes`: AppUserModelID, iconos, DPI y barra de título oscura |
+| **Empaquetado** | PyInstaller (onedir) + [Inno Setup](https://jrsoftware.org/isinfo.php) 6 |
+| **Recursos gráficos** | Pillow, solo al compilar — iconos, banner y capturas se generan desde código |
+
+Cuatro dependencias en ejecución. Todo lo demás —interfaz, WAV, JSON, hilos, icono
+de bandeja— es librería estándar de Python, para no inflar el ejecutable.
+
+---
+
+## Qué trae
+
+- **Dos censores independientes.** El micrófono, y el audio del PC (juego, voz,
+  música) captado por loopback de WASAPI: no hay que enrutar nada y tú no notas
+  retardo. Cada uno tiene su motor y su hilo, así que si uno se cae el otro sigue.
+- **Editor de palabras integrado.** Las dos listas, con buscador, altas, bajas y
+  correcciones. Se aplica al momento, aunque estés emitiendo. El fichero conserva
+  sus comentarios y categorías, así que editarlo a mano sigue valiendo.
+- **Los fallos se ven.** Un censor que se para en silencio es peor que no tener
+  ninguno, porque te crees protegido. El programa vigila que no se muera el hilo
+  de reconocimiento, que el flujo de audio no se pare sin dar error, y que el
+  micrófono no esté abierto pero mudo. Los tres salen en rojo, el único color de
+  toda la interfaz.
+- **Modo prueba.** Graba 8 segundos y te deja comparar el antes y el después sin
+  emitir nada.
+- **Modo rendimiento.** Esconde la ventana en la bandeja; el censor sigue.
+- **Seis sonidos de censura**, tema claro y oscuro, y todo configurable.
 
 <p align="center">
-  <img src="docs/guia-retardo.png" alt="Por que hay retardo" width="49%">
-  <img src="docs/guia-cable.png" alt="Instalar VB-CABLE" width="49%">
+  <img src="docs/palabras.png" alt="Editor de listas" width="60%">
 </p>
-
-<p align="center">
-  <img src="docs/guia-video.png" alt="Cuadrar el video con la voz" width="70%">
-</p>
-
-El paso del retardo se redibuja con el valor que tengas puesto, el de VB-CABLE
-detecta si el cable esta instalado y se puede volver a comprobar sin reiniciar,
-y el de dispositivos abre el microfono de verdad para que el medidor se mueva
-mientras hablas.
 
 ---
 
 ## Uso diario
 
-| Boton | Que hace |
+| Botón | Qué hace |
 |---|---|
 | **INICIAR** | arranca el censor |
 | **CENSOR ON / OFF** | deja pasar el audio sin filtrar, sin parar nada |
-| **MUTE** | silencia el microfono del todo |
-| **MODO PRUEBA** | graba 8 s y te deja comparar el antes y el despues sin emitir |
+| **MUTE** | silencia el micrófono del todo |
+| **MODO PRUEBA** | graba 8 s y te deja comparar antes de emitir |
 | **MODO RENDIMIENTO** | esconde la ventana en la bandeja del reloj |
-| **GUIA DE INSTALACION** | vuelve a abrir la guia de los siete pasos |
+| **GUÍA DE INSTALACIÓN** | vuelve a abrir la guía de los siete pasos |
 
 Mientras emites, lo que hay que mirar es la cabecera:
 
@@ -139,170 +159,115 @@ Mientras emites, lo que hay que mirar es la cabecera:
 |---|---|
 | `● ACTIVO` | todo correcto, censurando |
 | `● PARADO` | no hay nada en marcha |
-| `○ SIN CENSURA` | el audio pasa sin filtrar (lo has apagado tu) |
-| `● SILENCIADO` | el microfono esta cerrado |
-| `● FALLO` | **estas emitiendo sin filtrar sin quererlo** |
+| `○ SIN CENSURA` | el audio pasa sin filtrar (lo has apagado tú) |
+| `● SILENCIADO` | el micrófono está cerrado |
+| `● FALLO` | **estás emitiendo sin filtrar sin quererlo** |
 
-El rojo es el unico color de toda la interfaz. Si algo se pinta en rojo, es que
-hay que mirarlo.
+### Tus palabras
 
-### El retardo
-
-Por defecto son 1500 ms, que es lo recomendado. Es el ajuste critico: por debajo
-no llega a tiempo y las palabras se escapan. Se cambia en **CENSURA › Retardo**.
-
-Ese mismo retardo hay que repetirlo en el video de OBS (camara, captura de
-juego, alertas) o se te vera hablar antes de oirte. El paso 6 de la guia lo
-explica con un diagrama.
-
-### Audio del PC
-
-El interruptor de la tarjeta **Audio del PC** censura tambien lo que suena por
-tus auriculares: juego, voz, musica y alertas. No hay que enrutar nada ni se
-nota retardo jugando, porque el programa escucha una *copia* de lo que ya esta
-sonando.
-
-Coge la mezcla entera y no se puede separar: una cancion con una palabra de la
-lista tambien se lleva su pitido. En OBS hay que quitar o silenciar la fuente
-"Audio del escritorio", que es la que lleva el sonido sin censurar.
-
----
-
-## Tus palabras
-
-Desde la ventana principal, **CENSURA › Palabras › Editar lista** abre el editor:
-las dos listas enteras, con buscador, altas, bajas y correcciones. Al pulsar
-*Guardar y aplicar* se escribe en los ficheros y se recarga el detector sin
-cortar el audio, aunque estes emitiendo.
-
-<p align="center">
-  <img src="docs/palabras.png" alt="Editor de listas" width="70%">
-</p>
-
-Los ficheros se siguen pudiendo editar a mano, que es lo mismo: el editor
-respeta los comentarios y las categorias, asi que los dos caminos conviven.
-
-`palabras.txt` se abre con el bloc de notas. Una palabra o frase por linea:
+En **CENSURA › Palabras › Editar lista**. Una palabra o frase por línea, y un
+asterisco al final cubre todo lo que empiece igual:
 
 ```
 tonto            solo "tonto"
-tont*            tonto, tontos, tontaco, tonteria...
-me cago en todo  tambien valen frases
-# esto es un comentario
+tont*            tonto, tontos, tontaco, tontería...
+me cago en todo  también valen frases
 ```
 
-`palabras_seguras.txt` es lo contrario: palabras normales que suenan parecido a
-una de la lista y que **no** hay que censurar. Sirve para quitar falsos
+La pestaña **Palabras seguras** es lo contrario: palabras normales que suenan
+parecido a una censurada y que **no** hay que tapar. Sirve para quitar falsos
 positivos sin bajar la sensibilidad general.
 
-Al guardar cualquiera de los dos, pulsa **Recargar** en la ventana. Se aplica
-sin cortar el audio y sin reiniciar nada.
+### Si algo no va
 
-### Los tres modos de deteccion
+**No aparece CABLE Input** — VB-CABLE no está instalado, o falta reiniciar Windows
+después de instalarlo.
 
-Se cambian en `config.json`, en `modo_deteccion`:
+**El nivel no se mueve** — el micrófono está silenciado (en los auriculares con
+brazo, subir el brazo los silencia) o Windows no da permiso: *Configuración ›
+Privacidad y seguridad › Micrófono › permitir a las aplicaciones de escritorio*.
 
-| Modo | Cuando usarlo |
-|---|---|
-| `estricto` | casi solo coincidencias literales; el que menos pita de mas |
-| `balanceado` | por defecto; aguanta que el reconocedor oiga mal |
-| `agresivo` | ante la duda, pita; para canales donde una sancion es cara |
+**Se escapan palabras** — sube el retardo, comprueba que la palabra esté en la
+lista y prueba el modo `agresivo` en `config.json`.
 
----
+**Pita sobre palabras normales** — añádela a *Palabras seguras* y guarda.
 
-## Problemas
+**Me oigo con retraso** — estás escuchando la salida del cable. La monitorización
+tiene que ir directa al micrófono, no pasar por BEEP STREAM.
 
-**No aparece CABLE Input en el desplegable de salida**
-VB-CABLE no esta instalado, o falta reiniciar Windows despues de instalarlo.
-
-**El nivel no se mueve aunque hable**
-El microfono esta silenciado (en los auriculares con brazo, subir el brazo los
-silencia) o Windows no da permiso: *Configuracion › Privacidad y seguridad ›
-Microfono › permitir a las aplicaciones de escritorio*.
-
-**Se escapan palabras**
-Sube el retardo. Comprueba que la palabra este en `palabras.txt` y prueba el
-modo `agresivo`. Con `herramientas/medir_latencia.py` puedes calibrar el retardo
-con tu propia voz.
-
-**Pita sobre palabras normales**
-Anade esa palabra a `palabras_seguras.txt` y pulsa Recargar.
-
-**Me oigo a mi mismo con retraso**
-Estas escuchando la salida del cable. La monitorizacion tiene que ir directa al
-microfono, no pasar por BEEP STREAM.
-
-**"Unanticipated host error [PaErrorCode -9999]"**
-Otro programa tiene el microfono cogido en exclusiva, o unos auriculares
-inalambricos se han dormido. Cierra OBS o Discord, enciendelos y reintenta. El
-programa ya prueba el mismo aparato por todas las APIs de Windows antes de
-rendirse.
-
-**El antivirus se queja del .exe**
-Es normal con ejecutables de PyInstaller sin firma digital. El codigo esta
-entero aqui y se puede compilar uno mismo con `construir.bat`.
+**"Unanticipated host error"** — otro programa tiene el micrófono en exclusiva, o
+unos auriculares inalámbricos se han dormido. El programa prueba el mismo aparato
+por todas las APIs de Windows antes de rendirse.
 
 ---
 
-## Como esta montado
+## Desde el código
+
+```bash
+git clone https://github.com/airamfuentes/beepstream
+cd beepstream
+instalar.bat          # dependencias + modelo de español de Vosk (~40 MB)
+BeepStream.bat        # arrancar
+```
+
+Hace falta Python 3.11 en Windows 10 o posterior.
+
+**Generar el instalador:**
+
+```bash
+construir.bat                  # PyInstaller + Inno Setup -> publicar\
+construir.bat sininstalador    # solo la carpeta portable
+```
+
+**Pruebas** — las cuatro primeras no necesitan micrófono ni modelo:
+
+```bash
+py -3.11 tests/test_matcher.py            # coincidencia fonética
+py -3.11 tests/test_engine.py             # buffer, DSP, lógica de tramos
+py -3.11 tests/test_falsos_positivos.py   # audita la lista real de palabras
+py -3.11 tests/test_interfaz.py           # paleta, tipografía, ventanas
+py -3.11 tests/test_integracion.py        # audio -> Vosk -> detección -> pitido
+py -3.11 tests/test_audio.py              # abre dispositivos de verdad
+py -3.11 tests/test_cable.py              # extremo a extremo por VB-CABLE
+```
+
+### Estructura
 
 ```
 main.py            arranque, argumentos, modo consola
 ├── gui.py         ventana principal
 │   ├── widgets.py componentes con tema (tarjetas, botones, medidores)
-│   ├── tema.py    paleta monocroma, escala tipografica y espaciado
-│   ├── marca.py   geometria del logo, compartida con el generador de iconos
-│   ├── fuentes.py carga Inter solo para el proceso, sin instalarla
-│   ├── sistema.py Windows: identidad, iconos, DPI y barra de titulo
-│   ├── asistente.py   guia de primer arranque, diagramas en lienzo
+│   ├── tema.py    paleta monocroma, escala tipográfica y espaciado
+│   ├── marca.py   geometría del logo, compartida con el generador de iconos
+│   ├── fuentes.py carga Inter solo para el proceso
+│   ├── sistema.py Windows: identidad, iconos, DPI y barra de título
+│   ├── asistente.py   guía de primer arranque, diagramas en lienzo
 │   ├── palabras.py    editor de las listas
 │   └── listas.py      lectura y escritura respetando los comentarios
-├── engine.py      buffer circular, nucleo del censor, motor del microfono
+├── engine.py      buffer circular, núcleo del censor, motor del micrófono
 ├── escritorio.py  segundo motor: audio del PC por loopback de WASAPI
-├── recognizer.py  envoltorio de Vosk, decimacion y ganancia
-├── matcher.py     coincidencia fonetica y lista de palabras seguras
-├── beeper.py      sintesis del sonido de censura (6 estilos) y WAV
-├── dispositivos.py  resolucion de dispositivos entre MME/DirectSound/WASAPI
-├── bandeja.py     icono de bandeja con Win32 puro, sin dependencias
-├── config.py      config.json con valores por defecto y migracion
-└── rutas.py       rutas distintas para codigo y para ejecutable empaquetado
+├── recognizer.py  envoltorio de Vosk, diezmado y ganancia
+├── matcher.py     coincidencia fonética y lista de palabras seguras
+├── beeper.py      síntesis del sonido de censura (6 estilos) y WAV
+├── dispositivos.py  resolución de dispositivos entre MME/DirectSound/WASAPI
+├── bandeja.py     icono de bandeja con Win32 puro
+├── config.py      config.json con valores por defecto y migración
+└── rutas.py       rutas distintas para código y ejecutable empaquetado
 ```
-
-La explicacion de las decisiones tecnicas (por que el retardo son 1500 ms y no
-630, como se evitan los falsos positivos, por que hay dos censores
-independientes) esta en el [README en ingles](README.md#the-engineering-problem).
-
----
-
-## Pruebas
-
-```bash
-py -3.11 tests/test_matcher.py            # coincidencia fonetica, sin hardware
-py -3.11 tests/test_engine.py             # buffer, DSP, logica de tramos
-py -3.11 tests/test_falsos_positivos.py   # audita la lista real de palabras
-py -3.11 tests/test_interfaz.py           # paleta, tipografia, listas y ventanas
-py -3.11 tests/test_integracion.py        # audio → Vosk → deteccion → pitido
-py -3.11 tests/test_audio.py              # abre dispositivos de verdad
-py -3.11 tests/test_cable.py              # extremo a extremo por VB-CABLE
-```
-
-Los tres primeros no necesitan ni microfono ni modelo.
 
 ---
 
 ## Privacidad
 
-El reconocimiento es offline y funciona sin conexion. No se graba ni se envia
-nada. Los unicos ficheros que se escriben son `config.json` y, si usas el modo
+El reconocimiento es offline y funciona sin conexión. No se graba ni se envía
+nada. Los únicos ficheros que se escriben son `config.json` y, si usas el modo
 prueba, dos `.wav` que puedes borrar cuando quieras.
 
 ---
 
 ## Licencia
 
-[MIT](LICENSE).
-
-Incluye [Inter](https://rsms.me/inter/) bajo SIL Open Font License.
-Reconocimiento de voz con [Vosk](https://alphacephei.com/vosk/) (Apache 2.0).
-VB-CABLE es una descarga gratuita aparte de
-[VB-Audio](https://vb-audio.com/Cable/) y no se redistribuye aqui.
+[MIT](LICENSE). Incluye [Inter](https://rsms.me/inter/) bajo SIL Open Font
+License. Reconocimiento de voz con [Vosk](https://alphacephei.com/vosk/)
+(Apache 2.0). VB-CABLE es una descarga gratuita aparte de
+[VB-Audio](https://vb-audio.com/Cable/) y no se redistribuye aquí.

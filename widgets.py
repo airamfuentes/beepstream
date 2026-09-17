@@ -352,6 +352,13 @@ class Boton(tk.Frame):
         "normal": ("panel_alto", "texto", "borde"),
         "sutil": ("panel", "suave", "panel_alto"),
         "peligro": ("panel_alto", "peligro", "borde"),
+        # Pestañas. La activa va sobre "panel", que es la superficie
+        # elevada en los dos temas (mas clara que el fondo en oscuro,
+        # blanca sobre gris en claro); la inactiva se funde con el
+        # fondo. Con "panel_alto" para la activa quedaban invertidas en
+        # el tema claro: la inactiva destacaba mas que la elegida.
+        "pestana": ("panel", "texto", "panel"),
+        "pestana_off": ("fondo", "suave", "panel_alto"),
     }
 
     def __init__(self, padre, kit: Kit, texto: str, comando=None,

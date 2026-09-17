@@ -19,7 +19,7 @@
 
 #define Nombre      "BEEP STREAM"
 #define Autor       "Airam Fuentes"
-#define Web         "https://github.com/airamfuentes/beep-stream"
+#define Web         "https://github.com/airamfuentes/beepstream"
 #define Ejecutable  "BeepStream.exe"
 
 [Setup]

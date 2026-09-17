@@ -4,23 +4,33 @@
 
 <p align="center">
   <strong>Real-time profanity censor for live streams.</strong><br>
-  Offline speech recognition, sub-second detection, no audio ever leaves the machine.
+  Hears what you say, recognises the words you chose, and covers them with a tone
+  before they reach the broadcast.
 </p>
 
 <p align="center">
+  <img alt="Windows 10+" src="https://img.shields.io/badge/Windows-10%2B-111?style=flat-square">
+  <img alt="Python 3.11" src="https://img.shields.io/badge/Python-3.11-111?style=flat-square">
+  <img alt="Offline" src="https://img.shields.io/badge/100%25-offline-111?style=flat-square">
+  <img alt="MIT" src="https://img.shields.io/badge/licence-MIT-111?style=flat-square">
+</p>
+
+<p align="center">
+  <a href="#download">Download</a> ·
   <a href="#how-it-works">How it works</a> ·
-  <a href="#install">Install</a> ·
-  <a href="#the-engineering-problem">The engineering problem</a> ·
-  <a href="#architecture">Architecture</a> ·
-  <a href="README.es.md">Español</a>
+  <a href="#tech-stack">Tech stack</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#from-source">From source</a> ·
+  <a href="README.es.md">🇪🇸 Español</a>
 </p>
 
 ---
 
-A live streamer who swears on air can lose a channel. Post-production bleeps do
-not exist when the broadcast *is* the product. BEEP STREAM sits between the
-microphone and the streaming software, listens to every word, and covers the
-ones on a user-defined list with a soft tone — before they reach the audience.
+Swearing on air can cost a streamer their channel, and there is no post-production
+when the broadcast *is* the product. BEEP STREAM sits between the microphone and
+OBS: it buffers your voice for a second and a half, transcribes it as it goes, and
+when a word from your list shows up it replaces exactly that fragment with a soft
+tone before it is ever emitted.
 
 Everything runs locally on CPU. No API, no account, no network.
 
@@ -31,9 +41,23 @@ Everything runs locally on CPU. No API, no account, no network.
 
 ---
 
+## Download
+
+**[⬇ Download the installer](../../releases/latest)** — run it and you are done.
+No admin rights needed; it creates the shortcuts and an uninstaller.
+
+You also need [VB-CABLE](https://vb-audio.com/Cable/), which is free. The app
+detects whether it is installed and links to it.
+
+On first launch a seven-step guide explains the whole setup with diagrams: what
+VB-CABLE is, why the audio is delayed, what to change in OBS, and how to keep the
+video in sync.
+
+---
+
 ## How it works
 
-Windows gives no way to insert a process between a microphone and an
+Windows gives no way to insert a program between a microphone and another
 application, so the audio takes a detour through a virtual cable:
 
 ```
@@ -42,161 +66,117 @@ microphone ──► BEEP STREAM ──► CABLE Input ══╗
                OBS ◄── CABLE Output ═════════╝
 ```
 
-Inside, the signal is split in two:
+Inside, the signal splits into two paths that never block each other:
 
-- The **audio path** writes every incoming block into a ring buffer and reads it
-  back out `N` milliseconds later. That delay is the whole trick: it buys time
-  to decide before the audio is committed.
-- The **recognition path** takes a copy of the same audio, downsamples it to
-  16 kHz and feeds it to [Vosk](https://alphacephei.com/vosk/), which returns
-  each recognised word with a start and end timestamp. Matches against the word
-  list are scheduled as intervals; when the playback cursor reaches one, the
-  buffer contents are replaced with the censor tone.
+| Path | What it does |
+|---|---|
+| **Audio** | Writes every incoming block into a ring buffer and reads it back out 1500 ms later. That delay is the whole trick: it buys time to decide before the audio is committed. |
+| **Recognition** | Takes a copy, downsamples 48 → 16 kHz and feeds it to Vosk, which returns each word with a start and end timestamp. Matches are scheduled as intervals; when the playback cursor reaches one, the buffer contents are replaced with the censor tone. |
 
-The two paths never block each other. Recognition runs on its own thread and
-communicates through a lock-free interval list, so a slow transcription degrades
-into a missed word — never into a dropout in the broadcast.
+Recognition runs on its own thread, so a slow transcription costs a missed word —
+never a dropout in the broadcast.
 
----
+### Why 1500 ms
 
-## Guided setup
+Vosk needs up to **830 ms** to confirm a word, and the recogniser runs three
+staggered **800 ms** windows (which detects more than four 600 ms ones while using
+26% less CPU). 830 + 800 sets the floor; 1500 ms leaves around 670 ms of headroom.
+The app warns before starting if you go below it.
 
-Three things about this setup are not guessable: that it needs a virtual audio
-cable, that the output is delayed by over a second, and that the same delay has
-to be repeated on the video or the mouth no longer matches the voice. A wall of
-text explains that badly, so the first run walks through seven steps, each with
-a diagram drawn on a canvas, and checks what it can in real time.
+### Not bleeping innocent words
 
-<p align="center">
-  <img src="docs/guia-retardo.png" alt="Why the audio is delayed" width="49%">
-  <img src="docs/guia-cable.png" alt="Installing VB-CABLE" width="49%">
-</p>
-
-The delay step redraws itself from the configured value, the VB-CABLE step
-detects whether the cable is installed and re-checks on demand, and the device
-step opens the microphone live so the level meter moves while you talk.
-
----
-
-## The engineering problem
-
-### Why the delay is 1500 ms and not 830 ms
-
-The obvious calculation says the delay only needs to cover recognition latency.
-Measured on this model, the worst case from *end of spoken word* to *Vosk emits
-the result* is **830 ms**. So 900 ms should be plenty.
-
-It is not, for two compounding reasons.
-
-The first is where the timestamps come from. Vosk reports word boundaries
-relative to the **start of the utterance**, and only finalises a result when it
-detects a pause. A word spoken at the beginning of a long sentence is not
-reported until that sentence ends.
-
-The second is the recognizer's own windowing. `recognizer.py` runs three
-staggered 800 ms windows rather than four 600 ms ones: with `N` channels and
-window `W`, a word lands whole inside some channel as long as it is shorter than
-`W × (1 − 1/N)`, and every forced flush costs ~26 ms of CPU. Measured over 120
-phrases degraded the way voice chat degrades them, 3 × 800 detects more than
-4 × 600 while using 26% less CPU. The price is 200 ms more detection latency.
-
-830 ms of recognition plus an 800 ms window is what sets the floor. At 1500 ms
-there is roughly 670 ms of headroom; below that the windows would have to shrink
-back to 600 ms and accuracy drops. The window warns before starting if the
-configured delay is under the recommended value.
-
-`herramientas/medir_latencia.py` measures the distribution on a real recording,
-so the number is calibrated rather than guessed.
-
-### Fuzzy matching without false positives
-
-Speech recognition on a small model mishears constantly. Matching literally
-misses `"joer"` for `"joder"`; matching loosely bleeps `"pescado"` because it
-sounds like something else.
-
-`matcher.py` uses a phonetic key tuned for Spanish (collapsing `b/v`, `y/ll`,
-`c/k/q`, silent `h`, `s/z/c` seseo) plus bounded edit distance, with three
-sensitivity levels. A second list, `palabras_seguras.txt`, holds innocent words
-that collide phonetically with a censored one and short-circuits them.
+A small speech model mishears constantly. Matching literally misses `"joer"` for
+`"joder"`; matching loosely bleeps `"pescado"`. So matching is **phonetic** — a key
+tuned for Spanish that collapses `b/v`, `y/ll`, `c/k/q`, silent `h` and `s/z/c` —
+plus bounded edit distance, in three sensitivity levels. A second list holds
+innocent words that collide phonetically and short-circuits them.
 
 The asymmetry is deliberate: a false negative costs a channel, a false positive
-costs an awkward beep. The default leans toward beeping.
-
-### Two independent censors
-
-Desktop audio — game, voice chat, music, alerts — is captured through WASAPI
-loopback rather than routed, so the user hears everything in real time with zero
-added latency while the program works on a copy.
-
-It runs as a **separate engine with its own recognizer and its own thread**. If
-loopback capture dies mid-stream, the microphone censor keeps running: the
-channel-ending risk is on the microphone, and one channel must not take the
-other down with it.
-
-### Editing the lists without destroying them
-
-`palabras.txt` is not just a list: it carries a header explaining the format
-and is split into commented categories. Rewriting the file from an in-memory
-list of terms would erase all of that, so the in-app editor never does.
-
-`listas.py` keeps the file as lines, tagging which ones are terms. Editing
-replaces a line in place, deleting removes that line, and adding appends under
-a section of its own. Comments, categories and ordering survive, so hand-editing
-the file in a text editor and editing it in the app remain interchangeable.
-Saving writes to a temporary file and renames it, after leaving a `.bak` — the
-one expensive mistake here is emptying the list right before going live.
-
-### Failure has to be loud
-
-A censor that silently stops is worse than no censor, because the streamer
-believes they are protected. The window watches for three distinct failures:
-
-| Failure | How it is detected |
-|---|---|
-| Recognition thread died | engine exposes a `fallo` flag |
-| Audio stream stopped without erroring | sample counter stops advancing for 4 s |
-| Microphone open but muted | peak level stays below −66 dBFS for 6 s |
-
-All three surface as red text in the header, the only colour in an otherwise
-monochrome interface.
+costs an awkward beep.
 
 ---
 
-## Install
+## Tech stack
 
-### For users
+| | |
+|---|---|
+| **Language** | Python 3.11 |
+| **Speech recognition** | [Vosk](https://alphacephei.com/vosk/) 0.3.45 — offline, CPU, per-word timestamps (Spanish model, 40 MB) |
+| **Audio I/O** | [sounddevice](https://python-sounddevice.readthedocs.io/) (PortAudio / WASAPI) for microphone and output |
+| **Desktop audio** | [PyAudioWPatch](https://github.com/s0d3s/PyAudioWPatch) — WASAPI loopback, which PortAudio does not expose |
+| **DSP** | NumPy: ring buffer, anti-alias filter, decimation, mixing, tone synthesis |
+| **Interface** | Tkinter plus a custom component kit (`widgets.py`), monochrome design tokens (`tema.py`), and a canvas-drawn logo and diagrams |
+| **Typeface** | [Inter](https://rsms.me/inter/), bundled and registered per-process — nothing is installed on the system |
+| **System tray** | Raw Win32 through `ctypes` — no extra dependency |
+| **Windows glue** | `ctypes`: AppUserModelID, icons, DPI awareness, dark title bar |
+| **Packaging** | PyInstaller (onedir) + [Inno Setup](https://jrsoftware.org/isinfo.php) 6 |
+| **Assets** | Pillow, build-time only — icons, banner and screenshots are generated from code |
 
-Download the installer from [Releases](../../releases) and run it. No admin
-rights required; it creates the shortcuts and an uninstaller. On first launch a
-guided setup explains VB-CABLE, the delay, and the OBS configuration with
-diagrams.
+Four runtime dependencies. Everything else — GUI, WAV, JSON, threads, tray icon —
+is the Python standard library, to keep the executable small.
 
-You will also need [VB-CABLE](https://vb-audio.com/Cable/) (free) — the setup
-guide detects whether it is present and links to it.
+---
 
-### From source
+## Features
+
+- **Two independent censors.** The microphone, and desktop audio (game, voice
+  chat, music) captured through WASAPI loopback — no routing and no added latency
+  for you. Each has its own engine and thread: if one dies, the other keeps going.
+- **Built-in word editor.** Both lists, with search, add, edit and remove. Applies
+  instantly, even mid-broadcast. The file keeps its comments and categories, so
+  editing it by hand still works.
+- **Failure has to be loud.** A censor that silently stops is worse than none,
+  because you believe you are protected. The app watches for a dead recognition
+  thread, an audio stream that stopped without erroring, and a microphone that is
+  open but muted. All three show up in red — the only colour in an otherwise
+  monochrome interface.
+- **Test mode.** Records 8 seconds and lets you compare before and after without
+  broadcasting anything.
+- **Performance mode.** Hides the window in the tray; recognition keeps running.
+- **Six censor sounds**, light and dark themes, and everything configurable.
+
+<p align="center">
+  <img src="docs/palabras.png" alt="Word list editor" width="60%">
+</p>
+
+---
+
+## From source
 
 ```bash
-git clone https://github.com/airamfuentes/beep-stream
-cd beep-stream
+git clone https://github.com/airamfuentes/beepstream
+cd beepstream
 instalar.bat          # dependencies + Vosk Spanish model (~40 MB)
 BeepStream.bat        # run
 ```
 
 Requires Python 3.11 on Windows 10 or later.
 
-### Building the installer
+**Build the installer:**
 
 ```bash
-construir.bat                  # PyInstaller + Inno Setup → publicar\
+construir.bat                  # PyInstaller + Inno Setup -> publicar\
 construir.bat sininstalador    # just the portable folder
 ```
 
-Inno Setup is installed automatically via winget if missing.
+**Tests** — the first four need no microphone and no model:
 
----
+```bash
+py -3.11 tests/test_matcher.py            # phonetic matching
+py -3.11 tests/test_engine.py             # ring buffer, DSP, interval logic
+py -3.11 tests/test_falsos_positivos.py   # audits the real word list
+py -3.11 tests/test_interfaz.py           # palette, type scale, windows
+py -3.11 tests/test_integracion.py        # audio -> Vosk -> detection -> tone
+py -3.11 tests/test_audio.py              # opens real devices
+py -3.11 tests/test_cable.py              # end-to-end through VB-CABLE
+```
 
-## Architecture
+`test_interfaz.py` is worth a note: colours and font sizes are requested by name
+(`"panel_alto"`, `"seccion"`), which Python cannot check — a typo is a `KeyError`
+raised only when that widget is painted. The test walks the modules with `ast`,
+validates every role literal, then builds all the windows in both themes.
+
+### Layout
 
 ```
 main.py            entry point, CLI flags, console mode
@@ -204,7 +184,7 @@ main.py            entry point, CLI flags, console mode
 │   ├── widgets.py themed component kit (cards, buttons, meters, toggles)
 │   ├── tema.py    design tokens: monochrome palette, type scale, spacing
 │   ├── marca.py   logo geometry, shared by the UI and the icon generator
-│   ├── fuentes.py loads the bundled Inter privately, no system install
+│   ├── fuentes.py loads the bundled Inter privately
 │   ├── sistema.py Win32 glue: app identity, icons, DPI, dark title bar
 │   ├── asistente.py   first-run guided setup, canvas diagrams
 │   ├── palabras.py    word-list editor
@@ -215,60 +195,10 @@ main.py            entry point, CLI flags, console mode
 ├── matcher.py     phonetic matching and the safe-word list
 ├── beeper.py      censor tone synthesis (6 styles) and WAV handling
 ├── dispositivos.py  device resolution across MME/DirectSound/WASAPI
-├── bandeja.py     system tray via raw Win32, no extra dependency
+├── bandeja.py     system tray through raw Win32
 ├── config.py      config.json with defaults and forward migration
 └── rutas.py       path resolution for source vs. frozen executable
 ```
-
-### Choices worth explaining
-
-**Tkinter, not Qt.** Ships with Python, adds nothing to the executable, and the
-whole interface is a settings panel plus two meters. The cost is that Tkinter
-has no component system and no theming — so `widgets.py` provides both, and
-every widget registers which palette role each of its colours plays. Switching
-themes is a dictionary swap and a repaint.
-
-**Canvas-drawn logo and diagrams.** No PNG assets for the UI. The mark is
-geometry in `marca.py`, rendered by Pillow for the `.ico` files and by a Tk
-canvas in the window itself. One definition, correct in both themes, sharp at
-any display scaling.
-
-**Win32 tray via ctypes.** `pystray` would pull in Pillow, several megabytes in
-the executable for one small feature. `bandeja.py` talks to `Shell_NotifyIcon`
-directly, with a hidden window and its own message loop on a separate thread.
-
-**`gc.freeze()` after startup.** Everything alive once the window is built —
-modules, widgets, the word list — will live until exit and is never garbage.
-Freezing it stops the collector from walking it on every full pass. Measured
-with the model loaded, that pass cost 3.8–5.4 ms; audio blocks are 30 ms.
-
-**Only one accent colour.** The interface is greyscale except for red, which is
-reserved for "you are broadcasting unfiltered". When a censor has one alarm that
-genuinely matters, decorative colour elsewhere is what buries it.
-
----
-
-## Tests
-
-```bash
-py -3.11 tests/test_matcher.py            # phonetic matching, no hardware
-py -3.11 tests/test_engine.py             # ring buffer, DSP, interval logic
-py -3.11 tests/test_falsos_positivos.py   # audits the real word list
-py -3.11 tests/test_interfaz.py           # palette, type scale, list editing, windows
-py -3.11 tests/test_integracion.py        # audio → Vosk → detection → tone
-py -3.11 tests/test_audio.py              # opens real devices
-py -3.11 tests/test_cable.py              # end-to-end through VB-CABLE
-```
-
-The first three need no microphone and no model.
-
-`test_interfaz.py` is worth a note. Colours and font sizes are requested by
-name (`"panel_alto"`, `"seccion"`), which Python cannot check: a typo is not a
-syntax error, it is a `KeyError` raised only when that particular widget is
-painted, on that particular screen. The test walks the UI modules with `ast`,
-collects every role literal and checks it against the palette and the type
-scale — then builds the main window, all seven guide steps and the list editor
-in both themes, which is the only thing that really proves the window opens.
 
 ---
 
@@ -276,15 +206,13 @@ in both themes, which is the only thing that really proves the window opens.
 
 Recognition is fully offline and works with no network connection. Nothing is
 recorded, uploaded or transmitted. The only files written are `config.json` and,
-if the test mode is used, two `.wav` files the user can delete.
+if you use test mode, two `.wav` files you can delete.
 
 ---
 
 ## Licence
 
-[MIT](LICENSE).
-
-Bundles [Inter](https://rsms.me/inter/) under the SIL Open Font License.
-Speech recognition by [Vosk](https://alphacephei.com/vosk/) (Apache 2.0).
+[MIT](LICENSE). Bundles [Inter](https://rsms.me/inter/) under the SIL Open Font
+License. Speech recognition by [Vosk](https://alphacephei.com/vosk/) (Apache 2.0).
 VB-CABLE is a separate free download from [VB-Audio](https://vb-audio.com/Cable/)
 and is not redistributed here.

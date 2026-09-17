@@ -378,7 +378,7 @@ class VentanaPalabras(tk.Toplevel):
         self.botones_pestana = []
         for indice, pestana in enumerate(self.pestanas):
             boton = w.Boton(fila, kit, pestana.titulo,
-                            lambda i=indice: self._cambiar_a(i), "sutil",
+                            lambda i=indice: self._cambiar_a(i), "pestana_off",
                             alto=9)
             boton.pack(side="left", padx=(0, tm.ESPACIO["s"]))
             self.botones_pestana.append(boton)
@@ -417,8 +417,7 @@ class VentanaPalabras(tk.Toplevel):
             else:
                 pestana.marco.pack_forget()
             self.botones_pestana[i].configurar(
-                variante="normal" if i == indice else "sutil",
-                tono="texto" if i == indice else "suave")
+                variante="pestana" if i == indice else "pestana_off")
 
     # --- estado -----------------------------------------------------
 

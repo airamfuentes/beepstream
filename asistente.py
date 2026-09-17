@@ -596,10 +596,14 @@ class Asistente(tk.Toplevel):
                 pass  # la ventana va justa: se tira el nivel y a otra cosa
 
         try:
-            self._escucha = sd.InputStream(
-                device=indice, channels=1, samplerate=48000, blocksize=2048,
-                dtype="float32", callback=llegada)
-            self._escucha.start()
+            # Por disp.abrir() y no directamente: un mismo micrófono
+            # puede fallar por una API de Windows y abrir por otra, y
+            # abrir() las prueba todas antes de rendirse.
+            self._escucha, _usado = disp.abrir(
+                lambda i: sd.InputStream(
+                    device=i, channels=1, samplerate=48000, blocksize=2048,
+                    dtype="float32", callback=llegada),
+                indice, entrada=True, que_es="el micrófono")
             self.eti_nivel.configure(text="Escuchando el micrófono…",
                                      fg=self.kit.c("tenue"))
         except Exception as error:  # noqa: BLE001

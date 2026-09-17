@@ -1183,23 +1183,29 @@ class VentanaPrueba(tk.Toplevel):
         self.dispositivo = dispositivo
         self.original: np.ndarray | None = None
         self.censurado: np.ndarray | None = None
+        self._cuenta: str | None = None   # tarea de la cuenta atras
+        self._restante = 0
 
-        self.title("Modo prueba")
+        self.title("BEEP STREAM  ·  Modo prueba")
         self.configure(bg=self.kit.c("fondo"))
-        self.geometry("540x460")
+        self.kit.registrar(self, bg="fondo")
+        self.geometry("560x520")
+        self.minsize(520, 460)
         self.transient(padre)
-        self.resizable(False, False)
 
         cabecera = self.kit.marco(self, "fondo")
-        cabecera.pack(fill="x", padx=tm.ESPACIO["l"], pady=(tm.ESPACIO["l"], 0))
+        cabecera.pack(fill="x", padx=tm.ESPACIO["l"],
+                      pady=(tm.ESPACIO["l"], tm.ESPACIO["s"]))
+        w.Marca(cabecera, self.kit, 34, 20).pack(side="left", padx=(0, 12))
         self.kit.etiqueta(cabecera, "Modo prueba", "titulo", "texto",
-                          "fondo").pack(anchor="w")
+                          "fondo").pack(side="left")
+
         self.kit.etiqueta(
-            cabecera,
-            f"Graba {self.SEGUNDOS} s, di alguna palabra de la lista y compara\n"
-            "el resultado. No se emite nada: es solo para ti.",
-            "cuerpo", "suave", "fondo", justify="left").pack(
-            anchor="w", pady=(tm.ESPACIO["xs"], tm.ESPACIO["m"]))
+            self,
+            f"Graba {self.SEGUNDOS} s, di alguna palabra de la lista y compara "
+            "el resultado.\nNo se emite nada: es solo para ti.",
+            "cuerpo", "suave", "fondo", justify="left", anchor="w").pack(
+            fill="x", padx=tm.ESPACIO["l"], pady=(0, tm.ESPACIO["m"]))
 
         self.boton_grabar = w.Boton(self, self.kit, "GRABAR",
                                     self._grabar, "principal",
@@ -1240,6 +1246,7 @@ class VentanaPrueba(tk.Toplevel):
                       self.boton_guardar):
             boton.habilitar(False)
         self._escribir("Pulsa GRABAR para empezar.")
+        self.kit.adoptar_ventana(self)
 
     def _escribir(self, texto: str) -> None:
         self.resultado.configure(state="normal")
@@ -1250,18 +1257,92 @@ class VentanaPrueba(tk.Toplevel):
     def _grabar(self) -> None:
         self.boton_grabar.habilitar(False)
         self.boton_grabar.configurar(texto="GRABANDO…")
-        self._escribir("Habla ahora…")
+        for boton in (self.boton_original, self.boton_censurado,
+                      self.boton_guardar):
+            boton.habilitar(False)
+
+        self._restante = self.SEGUNDOS
+        self._contar()
         threading.Thread(target=self._trabajo, daemon=True).start()
+
+    def _contar(self) -> None:
+        """Cuenta atras mientras graba.
+
+        Sin ella la ventana se queda ocho segundos con el mismo texto y
+        no hay forma de saber cuanto queda para dejar de hablar.
+        """
+        if self._restante <= 0:
+            self._escribir("Analizando…")
+            self._cuenta = None
+            return
+        self._escribir(f"Habla ahora…   {self._restante} s")
+        self._restante -= 1
+        self._cuenta = self.after(1000, self._contar)
+
+    def _parar_cuenta(self) -> None:
+        if self._cuenta is not None:
+            try:
+                self.after_cancel(self._cuenta)
+            except tk.TclError:
+                pass
+            self._cuenta = None
+
+    def _capturar(self, frecuencia: int) -> np.ndarray:
+        """Graba del micrófono elegido y devuelve las muestras.
+
+        Se abre con dispositivos.abrir() y no con sd.rec() porque un
+        mismo micrófono puede fallar por una API de Windows y abrir sin
+        problema por otra: abrir() prueba todas las copias del aparato
+        antes de rendirse, que es exactamente lo que hace el censor al
+        arrancar. Con sd.rec() bastaba con que la primera copia diera
+        "Unanticipated host error" para que el modo prueba no grabase
+        nada aunque el censor funcionara.
+        """
+        total = int(self.SEGUNDOS * frecuencia)
+        trozos: list[np.ndarray] = []
+        recogidas = 0
+        completo = threading.Event()
+
+        def llegada(datos, _cuadros, _tiempo, _estado):
+            nonlocal recogidas
+            if recogidas >= total:
+                return
+            trozos.append(datos[:, 0].copy())
+            recogidas += len(datos)
+            if recogidas >= total:
+                completo.set()
+
+        flujo, _usado = disp.abrir(
+            lambda indice: sd.InputStream(
+                device=indice, channels=1, samplerate=frecuencia,
+                dtype="float32", blocksize=2048, callback=llegada),
+            self.dispositivo, entrada=True,
+            que_es="el micrófono para el modo prueba")
+
+        try:
+            # Un poco de margen sobre la duracion: si el flujo se queda
+            # corto se trabaja con lo que haya en vez de esperar sin fin.
+            completo.wait(self.SEGUNDOS + 4)
+        finally:
+            try:
+                flujo.stop()
+                flujo.close()
+            except Exception:  # noqa: BLE001
+                pass
+
+        if not trozos:
+            raise RuntimeError(
+                "El micrófono se ha abierto pero no ha entregado audio.\n"
+                "Comprueba que no este silenciado.")
+        return np.concatenate(trozos)[:total]
 
     def _trabajo(self) -> None:
         ajustes = self.padre.config_app
         frecuencia = ajustes.frecuencia
         try:
-            grabacion = sd.rec(int(self.SEGUNDOS * frecuencia), samplerate=frecuencia,
-                               channels=1, dtype="float32", device=self.dispositivo)
-            sd.wait()
-            self.original = grabacion[:, 0].copy()
+            self.original = self._capturar(frecuencia)
 
+            self.after(0, self._parar_cuenta)
             self.after(0, lambda: self._escribir("Analizando…"))
             self.censurado, encontradas = procesar_grabacion(
                 self.original, ajustes, self.padre.detector, ajustes.ruta_modelo)
@@ -1280,14 +1361,16 @@ class VentanaPrueba(tk.Toplevel):
                          "Si has dicho una palabra de la lista:\n"
                          "  · acerca el micrófono y sube el volumen\n"
                          "  · vocaliza un poco más\n"
-                         "  · comprueba que la palabra esta en palabras.txt\n"
-                         "  · prueba el modelo grande si falla a menudo")
+                         "  · comprueba que esté en la lista, desde\n"
+                         "    CENSURA › Palabras › Editar lista\n"
+                         "  · prueba el modo de detección agresivo")
             self.after(0, lambda: self._terminar(texto))
         except Exception as error:  # noqa: BLE001
             mensaje = str(error)
             self.after(0, lambda: self._terminar(f"Error al grabar:\n\n{mensaje}"))
 
     def _terminar(self, texto: str) -> None:
+        self._parar_cuenta()
         self._escribir(texto)
         self.boton_grabar.habilitar(True)
         self.boton_grabar.configurar(texto="GRABAR OTRA VEZ")

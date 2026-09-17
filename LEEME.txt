@@ -126,4 +126,4 @@
 
 
   Codigo, documentacion completa y novedades:
-  https://github.com/airamfuentes/beep-stream
+  https://github.com/airamfuentes/beepstream
