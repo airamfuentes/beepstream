@@ -1,0 +1,28 @@
+# Modelo de voz de Vosk: se descarga aparte con instalar.bat.
+model/
+
+# Empaquetado con PyInstaller y salida del instalador.
+build/
+dist/
+publicar/
+*.spec
+
+# Ajustes locales: llevan los indices de los dispositivos de audio de
+# cada maquina. El programa lo crea solo en el primer arranque.
+config.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Grabaciones que deja el modo prueba.
+prueba_original.wav
+prueba_censurado.wav
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store

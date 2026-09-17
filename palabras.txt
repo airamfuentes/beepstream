@@ -1,0 +1,527 @@
+# ====================================================================
+#  BEEP STREAM - palabras y frases a censurar
+# ====================================================================
+#
+#  Una palabra o frase por linea. Las lineas con # son comentarios.
+#
+#  NO hace falta escribir variantes con tildes, plurales ni faltas:
+#  el detector compara por SONIDO, no por letras.
+#      cabron       ya cubre  cabron, cabrón, cabrones, kabron
+#      gilipollas   ya cubre  gilipoyas, gilipolla, gili pollas
+#      hijoputa     ya cubre  ijoputa, hijo puta
+#
+#  UN ASTERISCO AL FINAL = RAIZ. Cubre todo lo que empiece igual:
+#      cabron*      cubre  cabron, cabronazo, cabronada, cabrones
+#      mierd*       cubre  mierda, mierdas, mierdoso, mierdecilla
+#
+#  Cuidado con las raices cortas: "poll*" taparia "pollo" y "pollito".
+#  Por eso abajo hay raices solo donde son seguras.
+#
+#  Se recarga en caliente: guarda y pulsa "recargar" en la ventana.
+# ====================================================================
+
+
+# --------------------------------------------------------------------
+#  FAMILIAS COMPLETAS (raices seguras)
+# --------------------------------------------------------------------
+puta*
+puto*
+mierd*
+jod*
+cabron*
+retras*
+retra*
+cabrone*
+gilipoll*
+gilipuert*
+coñ*
+cojon*
+maricon*
+capull*
+mamon*
+mach*
+macho*
+machorra*
+retar*
+mamona*
+pendej*
+subnormal*
+mongol*
+mogolic*
+cagon*
+cagad*
+malparid*
+malnacid*
+guarr*
+zorr*
+soplapoll*
+soplagait*
+pajill*
+pajer*
+pringad*
+chochit*
+
+
+# --------------------------------------------------------------------
+#  PALABRAS SUELTAS
+# --------------------------------------------------------------------
+joder
+jodete
+jodido
+jodida
+mierda
+coño
+retarded
+carajo
+retrasao
+hostia
+hostias
+ostia
+machorra
+ostias
+hostion
+copon
+polla
+pollas
+pollon
+picha
+pichafloja
+chocho
+verga
+culo
+culazo
+culero
+ojete
+follar
+folla
+follando
+follame
+follado
+follon
+marica
+maricona
+maracas
+imbecil
+idiota
+estupido
+estupida
+cretino
+cretina
+tarado
+tarada
+anormal
+merluzo
+mendrugo
+zoquete
+berzotas
+tarugo
+panoli
+baboso
+babosa
+asqueroso
+asquerosa
+bastardo
+bastarda
+desgraciado
+desgraciada
+cerdo
+cerda
+puerco
+guarrada
+guarrindongo
+chorizo
+sinverguenza
+capullo
+capulla
+gilipollez
+hijoputa
+hijaputa
+hijosputa
+hijaeputa
+cagarse
+cagando
+cague
+caguen
+cabronazo
+tonto
+tonta
+lelo
+lela
+memo
+bobo
+boba
+
+
+# --------------------------------------------------------------------
+#  LATINOAMERICA (por si te salen, y por el publico de TikTok)
+# --------------------------------------------------------------------
+boludo
+boluda
+pelotudo
+pelotuda
+forro
+chinga
+chingar
+chingada
+chingado
+pinche
+huevon
+huevona
+weon
+weona
+conchudo
+conchuda
+culiao
+culiado
+gonorrea
+maraco
+joto
+puñeta
+puñetero
+sapo
+malparido
+mierdero
+verguero
+pelado
+pendejada
+
+
+# --------------------------------------------------------------------
+#  FRASES (se tapan enteras, no solo la palabra fea)
+# --------------------------------------------------------------------
+hijo de puta
+hija de puta
+hijos de puta
+hijas de puta
+hijo de la gran puta
+hijo de perra
+la puta madre
+tu puta madre
+su puta madre
+puta madre
+de puta madre
+me cago
+me cago en dios
+me cago en la hostia
+me cago en la ostia
+me cago en la puta
+me cago en la leche
+me cago en tu madre
+me cago en tus muertos
+me cago en todo
+me cago en el copon
+me cago en la virgen
+me cago en la mar
+cagüen dios
+vete a la mierda
+vete a tomar por culo
+vete al carajo
+vete a cagar
+vete a la porra
+tomar por culo
+por el culo
+que te den
+que te den por culo
+que te jodan
+que te follen
+que te pire
+la madre que te pario
+la madre que lo pario
+la madre que los pario
+la madre que te trajo
+no me jodas
+no jodas
+ni de coña
+que cojones
+de los cojones
+hasta los cojones
+tocar los cojones
+tocar las narices
+tocar los huevos
+comeme la polla
+chupame la polla
+chupamela
+come pollas
+cara de culo
+cara de mierda
+cara de bobo
+pedazo de mierda
+trozo de mierda
+saco de mierda
+come mierda
+puto amo
+hostia puta
+ostia puta
+la virgen
+manda huevos
+y una mierda
+una mierda
+que asco
+malas pulgas
+
+
+
+# --------------------------------------------------------------------
+#  RACISTAS Y XENOFOBOS
+# --------------------------------------------------------------------
+pancho
+panchos
+panchito
+panchitos
+sudaca
+sudacas
+sudaco
+moro
+moros
+moraco
+negrata
+negratas
+niggа
+machupichu
+machu pichu
+espalda mojada
+mojado de mierda
+guiri
+guiris
+maketo
+charnego
+paki
+paquistani de mierda
+mena
+menas
+puto moro
+puto sudaca
+puto pancho
+puto negro
+puto gitano
+puto chino
+
+# --------------------------------------------------------------------
+#  CAPACITISTAS
+# --------------------------------------------------------------------
+retrasado
+retrasada
+retrasados
+retrasadas
+retrasao
+retrasaos
+subnormal profundo
+mongolico
+mongolica
+mongolo
+mongola
+autista
+autistas
+paralitico
+paralitica
+tullido
+tullida
+minusvalido
+minusvalida
+invalido de mierda
+sidoso
+sidosa
+epileptico de mierda
+enfermo mental
+loco de mierda
+esquizofrenico de mierda
+manco
+mancos
+manca
+
+# --------------------------------------------------------------------
+#  HOMOFOBOS Y TRANSFOBOS
+# --------------------------------------------------------------------
+bujarron
+bujarrona
+sarasa
+sarasas
+mariposon
+mariposona
+julandron
+julandrona
+maricona
+mariconas
+mariquita
+travelo
+travelos
+trolo
+puto maricon
+puta travesti
+plumas de mierda
+sidoso maricon
+
+# --------------------------------------------------------------------
+#  MISOGINOS
+# --------------------------------------------------------------------
+furcia
+furcias
+golfa
+golfas
+ramera
+rameras
+buscona
+busconas
+pendona
+pendonas
+calientapollas
+zorron
+zorrona
+puta barata
+guarrilla
+cualquiera de mierda
+lagarta
+lagartona
+arpia
+bruja de mierda
+
+# --------------------------------------------------------------------
+#  DE JUEGO
+# --------------------------------------------------------------------
+noob
+noobs
+perdedor
+perdedora
+lloron
+llorona
+llorica
+tramposo
+tramposa
+cheater
+cheto
+chetos
+campero
+rata de mierda
+manco de mierda
+inutil de mierda
+paquete de mierda
+
+# --------------------------------------------------------------------
+#  MAS INSULTOS GENERALES
+# --------------------------------------------------------------------
+cenutrio
+cenutria
+ceporro
+ceporra
+palurdo
+palurda
+paleto
+cateto
+cateta
+garrulo
+garrula
+chusma
+escoria
+gusano
+gusanos
+sabandija
+alimana
+lameculos
+chupaculos
+comemierda
+mierdecilla
+mierdecillas
+matao
+matados
+descerebrado
+descerebrada
+energumeno
+energumena
+majadero
+majadera
+necio
+necia
+zopenco
+zopenca
+pazguato
+pazguata
+papanatas
+lerdo
+lerda
+mameluco
+mamarracho
+mamarracha
+adefesio
+callate ya
+que te calles
+cierra la boca
+cierra el pico
+don nadie
+poca cosa
+muerto de hambre
+pedazo de animal
+pedazo de bestia
+pedazo de burro
+mal nacido
+sin verguenza
+caradura
+sinverguenza
+rastrero
+rastrera
+miserable
+despojo
+despojo humano
+basura humana
+escoria humana
+
+# ====================================================================
+#  SECCION OPCIONAL - AMBIGUAS
+# ====================================================================
+#
+#  Estas son insultos, pero tambien palabras normales. Si las activas
+#  vas a pitar sobre frases inocentes. Quita el # de la que quieras.
+#
+#  Entre parentesis, el uso normal que quedaria censurado.
+#
+# retrasado          (el tren va retrasado)
+# retrasada          (la entrega va retrasada)
+# inutil             (es inutil intentarlo)
+# payaso             (el payaso del circo)
+# perra              (mi perra se llama Luna)
+# perro              (saca al perro)
+# rata               (el animal)
+# nabo               (la verdura)
+# rabo               (el rabo del gato)
+# conejo             (el animal)
+# almeja             (el marisco)
+# concha             (la concha de la playa, y el nombre Concha)
+# paja               (la paja del campo, una pajita)
+# huevos             (los huevos fritos)
+# leche              (un vaso de leche)
+# polvo              (quitar el polvo)
+# capullo            (el capullo de la flor)  <- ya activo arriba
+# gitano             (etnia, y tambien "hacer una gitanada")
+# indio              (gentilicio)
+# judio              (religion / gentilicio)
+# chino              (gentilicio, y "chino" de la cocina)
+# negro              (el color)
+# down               (sindrome de Down, termino medico)
+# deficiente         (rendimiento deficiente)
+# cojo               (cojear de verdad)
+# basura             (la bolsa de basura)
+# rata               (el animal, y "rata" de camper en juegos)
+# fantasma           (el de las peliculas)
+# melon              (la fruta)
+# besugo             (el pescado)
+#
+#  Estas se han quitado de la lista activa porque en la auditoria
+#  pitaban encima de habla normal. Actívalas si te compensa:
+#
+# paquete            (me llego el paquete)   <- y "paquete" de mal jugador
+# paquetes           (un paquete de folios)
+# paleta             (la paleta de colores, la paleta de padel)
+# mora               (la fruta del bosque)
+# polaco             (gentilicio de Polonia)
+# trola              (me conto una trola = una mentira)
+# gorda / gordo      (descripcion normal)
+# feo / fea          (descripcion normal)
+#
+# ====================================================================
+#  NOTA SOBRE EXPRESIONES POSITIVAS
+# ====================================================================
+#
+#  "de puta madre" y "puto amo" son elogios, pero llevan la palabra
+#  dentro y TikTok las penaliza igual. Estan activas a proposito.
+#  Si prefieres que pasen, borra sus lineas Y añade una excepcion en
+#  palabras_seguras.txt.
+# ====================================================================

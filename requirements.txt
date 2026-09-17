@@ -1,0 +1,24 @@
+# BEEP STREAM - dependencias de ejecucion
+#
+# Solo cuatro. Todo lo demas (interfaz, wav, json, hilos, icono de
+# bandeja) es libreria estandar de Python, para no inflar el ejecutable
+# ni la instalacion.
+
+vosk==0.3.45          # reconocimiento de voz offline con timestamps por palabra
+sounddevice==0.4.6    # captura y salida de audio (PortAudio / WASAPI)
+numpy>=1.24,<2.0      # buffer de audio y mezcla
+
+# Para censurar tambien lo que suena por los auriculares hace falta
+# captura loopback de WASAPI, y PortAudio no la expone: sounddevice
+# sigue sin ella incluso en la 0.5.2. PyAudioWPatch es PyAudio con esa
+# parte compilada. Sin el, el programa funciona igual pero solo con el
+# microfono: el canal del audio del PC sale desactivado y avisa.
+PyAudioWPatch==0.2.12.8
+
+# --- solo para desarrollar, no hace falta para usar el programa ------
+#
+# Pillow      genera los iconos, el banner y las capturas
+#             (herramientas/generar_iconos.py, generar_capturas.py)
+# pyinstaller empaqueta el ejecutable (construir.bat)
+#
+#   py -3.11 -m pip install Pillow pyinstaller

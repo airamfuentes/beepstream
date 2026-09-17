@@ -1,0 +1,175 @@
+# ====================================================================
+#  BEEP STREAM - lista blanca
+# ====================================================================
+#
+#  Palabras que NUNCA se censuran, pase lo que pase.
+#
+#  Manda sobre palabras.txt: si una palabra esta aqui, no la tapa ni
+#  una raiz con asterisco ni el modo agresivo.
+#
+#  Para que sirve: cuando el censor te pita encima de algo inocente,
+#  en vez de desactivar el insulto entero, escribes aqui la palabra
+#  buena y listo. Una por linea.
+#
+#  Las de abajo son colisiones reales detectadas con la lista actual.
+#  No las borres sin saber lo que haces.
+# ====================================================================
+
+
+# --------------------------------------------------------------------
+#  Colisiones con el modo agresivo (una letra de diferencia)
+# --------------------------------------------------------------------
+cargando
+cargarse
+cargado
+cargada
+cargar
+merluza
+guardada
+guardado
+ganando
+
+# --------------------------------------------------------------------
+#  Parecidos por sonido que conviene blindar
+# --------------------------------------------------------------------
+cono
+conos
+coco
+cocos
+foro
+foros
+coro
+coros
+pero
+perico
+caro
+cara
+pera
+peras
+pollo
+pollos
+pollito
+pila
+pica
+picar
+pito
+pato
+pata
+patas
+pita
+cuerda
+cuerdas
+pierda
+pierde
+perder
+coger
+cogido
+cogiendo
+disputa
+disputar
+reputacion
+putativo
+cabra
+cabras
+cabaña
+zorro
+sora
+mongolia
+mongol
+vega
+baca
+vaca
+hoya
+olla
+ollas
+foca
+boca
+copa
+capa
+culto
+cubo
+codo
+cuna
+duda
+moda
+soda
+seda
+sopa
+sofa
+sola
+solo
+gota
+bota
+nota
+rota
+mota
+cota
+lata
+rata
+mata
+data
+beta
+meta
+seta
+veta
+
+# --------------------------------------------------------------------
+#  Palabras corrientes que suenan a insulto pero no lo son
+# --------------------------------------------------------------------
+concha
+conchita
+paja
+pajita
+pajar
+huevo
+huevos
+leche
+leches
+polvo
+polvos
+nabo
+nabos
+rabo
+rabos
+conejo
+conejos
+almeja
+almejas
+perra
+perro
+perros
+rata
+ratas
+cerdito
+capullito
+payasada
+tonteria
+bobada
+
+
+# --------------------------------------------------------------------
+#  FRASES PROTEGIDAS
+#  Expresiones normales que contienen una palabra de la lista negra.
+#  Ganan siempre: si aparece la frase entera, no se censura nada.
+# --------------------------------------------------------------------
+tan pancho
+tan panchos
+se quedo tan pancho
+me quede tan pancho
+va retrasado
+va retrasada
+voy retrasado
+vamos retrasados
+iba retrasado
+esta retrasado
+estan retrasados
+van retrasados
+llego retrasado
+salio retrasado
+el tren va retrasado
+el vuelo va retrasado
+vuelo retrasado
+tren retrasado
+campera
+camperas
+campera de cuero
